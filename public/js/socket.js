@@ -8,6 +8,15 @@ export function initSocket() {
       console.log('Connected to server with socket ID:', socket.id);
     });
 
+    socket.on('connectionId', (connectionId) => {
+      socket.connectionId = connectionId;
+      console.log('Connected with application connection ID:', connectionId);
+    });
+
+    socket.on('connect_error', (error) => {
+      console.error('Could not connect to server:', error.message, error.data);
+    });
+
     socket.on('disconnect', () => {
       console.log('Disconnected from server');
     });

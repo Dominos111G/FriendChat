@@ -2,9 +2,14 @@ import { verifyMessage } from '../verification/message.js';
 
 import { connectedUsers, searchingUsers, connectedPairs } from '../holders/usersHolder.js'
 
-const validStatuses = ['idle', 'searching', 'connected'];
-const validGenders = ['-', 'male', 'female', 'other'];
+const validStatuses = ['Idle', 'Searching', 'Connected'];
+const validGenders = ['-', 'Male', 'Female', 'Other'];
 const maxAge = 120;
+
+function getConnectionId(socket) {
+  const userId = socket.request.session?.userId;
+  return userId ? String(userId) : `socket_${socket.id}`;
+}
 
 function getText(value, field, maxLength) {
   if (typeof value !== 'string') {
@@ -31,7 +36,7 @@ function validateInfo(data, session) {
     return { valid: false, reason: nick.valid ? country.reason : nick.reason };
   }
   if (!Number.isInteger(age) || age < 18 || age > maxAge) {
-    return { valid: false, reason: 'age must be an integer between 18 and 120.' };
+    return { valid: false, reason: `age must be an integer between 18 and ${maxAge}.` };
   }
   if (!validGenders.includes(data.gender)) {
     return { valid: false, reason: 'gender is invalid.' };
@@ -52,14 +57,18 @@ function validateInfo(data, session) {
   };
 }
 
-function validatePreferences(data) {
+function validatePref(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return { valid: false, reason: 'Pref must be an object.' };
   }
 
   const ageMin = Number(data.ageMin);
-  if (!Number.isInteger(ageMin) || ageMin < 13 || ageMin > maxAge) {
-    return { valid: false, reason: 'ageMin must be an integer between 13 and 120.' };
+  const ageMax = Number(data.ageMax);
+  if (!Number.isInteger(ageMin) || !Number.isInteger(ageMax) || ageMin < 18 || ageMin > maxAge-5) {
+    return { valid: false, reason: `age must be an integer between 18 and ${maxAge-5}.` };
+  }
+  if (ageMax < 23 || ageMax > maxAge || (ageMax - ageMin) < 5) {
+      return { valid: false, reason: 'age must have at least a 5 years gap between min and max.' };
   }
   if (!validGenders.includes(data.gender)) {
     return { valid: false, reason: 'pref gender is invalid.' };
@@ -87,15 +96,15 @@ export function changeUserStatus(socketId, newStatus) {
   }
 
   // Usuń z listy
-  if (currentStatus === 'searching') { delete searchingUsers[socketId]; } 
-  else if (currentStatus === 'connected') { delete connectedPairs[socketId]; }
+  if (currentStatus === 'Searching') { delete searchingUsers[socketId]; } 
+  else if (currentStatus === 'Connected') { delete connectedPairs[socketId]; }
   
   // Zmień status
   if (connectedUsers[socketId]) { connectedUsers[socketId].status = newStatus; }
   
   // Dodaj do listy
-  if (newStatus === 'searching') { searchingUsers[socketId] = connectedUsers[socketId]; } 
-  else if (newStatus === 'connected') { connectedPairs[socketId] = connectedUsers[socketId]; }
+  if (newStatus === 'Searching') { searchingUsers[socketId] = connectedUsers[socketId]; } 
+  else if (newStatus === 'Connected') { connectedPairs[socketId] = connectedUsers[socketId]; }
 }
 
 function tryToPairUsers() {
@@ -112,12 +121,33 @@ function tryToPairUsers() {
 
 export function registerServerSocket(io){
   console.log('Registering server socket...');
+
+  io.use((socket, next) => {
+    const connectionId = getConnectionId(socket);
+    if (connectedUsers[connectionId]) {
+      const error = new Error('This user is already connected.');
+      error.data = { code: 'USER_ALREADY_CONNECTED', connectionId };
+      return next(error);
+    }
+
+    socket.data.connectionId = connectionId;
+    next();
+  });
+
   io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
-    connectedUsers[socket.id] = { socket, status: 'idle', info: null, pref: null };
+    const connectionId = socket.data.connectionId;
+    if (connectedUsers[connectionId]) {
+      socket.disconnect(true);
+      return;
+    }
+
+    console.log(`Socket connected: ${connectionId} (transport socket: ${socket.id})`);
+    connectedUsers[connectionId] = { socket, status: 'idle', info: null, pref: null };
+    socket.emit('connectionId', connectionId);
+
     socket.on('setUserData', (data, callback) => {
       const respond = typeof callback === 'function' ? callback : () => {};
-      const user = connectedUsers[socket.id];
+      const user = connectedUsers[connectionId];
       const infoResult = validateInfo(data?.info, socket.request.session);
       if (!infoResult.valid) {
         return respond({ success: false, message: infoResult.reason });
@@ -127,7 +157,7 @@ export function registerServerSocket(io){
       user.pref = null;
 
       if (socket.request.session?.userId) {
-        const prefResult = validatePreferences(data?.pref);
+        const prefResult = validatePref(data?.pref);
         if (!prefResult.valid) {
           user.info = null;
           return respond({ success: false, message: prefResult.reason });
@@ -137,8 +167,10 @@ export function registerServerSocket(io){
 
       return respond({ success: true, data: { info: user.info, pref: user.pref } });
     });
+
     socket.on('disconnect', () => {
-      console.log(`Socket disconnected: ${socket.id}`);
+      console.log(`Socket disconnected: ${connectionId}`);
+      if (connectedUsers[connectionId]?.socket !== socket) return;
       delete searchingUsers[socket.id];
       delete connectedPairs[socket.id];
       delete connectedUsers[socket.id];
