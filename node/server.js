@@ -51,7 +51,7 @@ app.post('/api/user/login', loginUser);
 app.post('/api/user/register', registerUser);
 app.post('/api/user/verify', verifyUser);
 // Reports API
-app.post('/api/report/helper', getReportHelper);
+app.get('/api/report/helper', getReportHelper);
 app.post('/api/report/create', createReport);
 app.post('/api/report/get', getReport);
 app.post('/api/report/remove', removeReport);

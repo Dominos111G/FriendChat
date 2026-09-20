@@ -1,14 +1,6 @@
 import { verifyMessage } from '../verification/message.js';
 
-const connectedUsers = {};
-// SOCKET_ID: {
-//  socket: Socket,
-//  status: 'idle'/'searching'/'connected', 
-//  info: {userid: 123, nick: 'JohnDoe', age: 20, gender: '-'/'male'/'female'/'other', country: 'Poland'},
-//  pref: {ageMin: 18, gender: '-'/'male'/'female'/'other', country: '-'/'Poland'}
-// }
-const searchingUsers = {};
-const connectedPairs = {};
+import { connectedUsers, searchingUsers, connectedPairs } from '../holders/usersHolder.js'
 
 const validStatuses = ['idle', 'searching', 'connected'];
 const validGenders = ['-', 'male', 'female', 'other'];

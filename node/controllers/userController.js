@@ -65,7 +65,7 @@ export async function loginUser(req, res) {
 
     return res.status(200).json({ success: true, message: 'Login successful.' });
   } catch (err) {
-    console.error('Error creating report:', err);
+    console.error('Error while logging in:', err);
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
@@ -124,7 +124,7 @@ export async function registerUser(req, res) {
 
     return res.status(200).json({ success: true, message: 'Registration successful. Please verify your account.' });
   } catch (err) {
-    console.error('Error creating report:', err);
+    console.error('Error while registering user:', err);
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
@@ -167,7 +167,7 @@ export async function verifyUser(req, res) {
 
     return res.status(200).json({ success: true, message: 'Account verified successfully.' });
   } catch (err) {
-    console.error('Error creating report:', err);
+    console.error('Error while verifying account:', err);
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
@@ -195,7 +195,7 @@ export async function verifyUserToken(req, res) {
 
     return res.status(200).json({ success: true, message: 'Token is valid.' });
   } catch (err) {
-    console.error('Error creating report:', err);
+    console.error('Error while verifying token:', err);
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
