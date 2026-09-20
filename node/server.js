@@ -14,6 +14,7 @@ import {
   getReportsCollection
 } from './controllers/firebaseController.js';
 import { loginUser, registerUser, verifyUser, verifyUserToken } from './controllers/userController.js';
+import { getReportHelper, createReport, getReport, removeReport } from './controllers/reportController.js';
 
 const app = express();
 app.set('view engine', 'ejs');
@@ -22,7 +23,7 @@ app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 const sessionMiddleware = session({
-  secret: process.env.SESSION_SECRET,
+  secret: process.env.SESSION_SECRET || 'not!a&secret',
   resave: false,            // Nie zapisuj sesji ponownie, jeśli nic się w niej nie zmieniło
   saveUninitialized: false, // Nie twórz sesji dla niezalogowanych użytkowników (oszczędność miejsca)
   cookie: { 
@@ -44,16 +45,16 @@ app.get('/tou', (req, res) => { res.render('help/terms-of-use'); });
 app.get('/privacy-policy', (req, res) => { res.render('help/privacy-policy'); });
 app.get('/cookie-policy', (req, res) => { res.render('help/cookie-policy'); });
 app.get('/safety-and-health', (req, res) => { res.render('help/safety-and-health'); });
+// User API
 app.post('/api/user/verifyToken', verifyUserToken);
 app.post('/api/user/login', loginUser);
 app.post('/api/user/register', registerUser);
 app.post('/api/user/verify', verifyUser);
-
-// app.post('/api/chat/search', null);
-// app.post('/api/chat/skip', null);
-// app.post('/api/chat/stop', null);
-// app.post('/api/chat/send', null);
-// app.post('/api/chat/report', null);
+// Reports API
+app.post('/api/report/helper', getReportHelper);
+app.post('/api/report/create', createReport);
+app.post('/api/report/get', getReport);
+app.post('/api/report/remove', removeReport);
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -64,8 +65,9 @@ io.engine.use(sessionMiddleware);
 
 const socketServerLoop = registerServerSocket(io); 
 
+const IP =  process.env.IP || '0.0.0.0';
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://localhost:${PORT}`);
+server.listen(PORT, IP, () => {
+  console.log(`Server running at http://${IP}:${PORT}`);
   socketServerLoop();
 });
