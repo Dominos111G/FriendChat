@@ -48,7 +48,7 @@ export async function createReport(req, res) {
   const userId = req.body.userId;
   const reporterId = req.body.reporterId;
   const reportType = req.body.reportType;
-  const reportCategory = req.body.reportedObjectId;
+  const reportCategory = req.body.reportCategory;
   const reportedObjectId = req.body.reportedObjectId;
   const reportedObjectContent = String(req.body.reportedObjectContent || '').trim();
   const roomId = String(req.body.roomId || '').trim();
