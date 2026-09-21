@@ -75,9 +75,24 @@ export async function registerUser(req, res) {
     const username = String(req.body.username || '').trim();
     const email = String(req.body.email || '').trim();
     const password = req.body.password;
+    const birthdayStr = String(req.body.birthday);
 
-    if (!username || !email || !password) {
+    if (!username || !email || !password || !birthday) {
       return res.status(400).json({ success: false, message: 'Some required fields are missing.' });
+    }
+
+    const birthday = new Date(birthdayStr);
+    if (isNaN(birthday.getTime())) {
+      return res.status(400).json({ success: false, message: 'Invalid birthday format.' });
+    }
+    const today = new Date();
+    let age = today.getFullYear() - birthday.getFullYear();
+    const monthDifference = today.getMonth() - birthday.getMonth();
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthday.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      return res.status(400).json({ success: false, message: 'You must be at least 18 years old.' });
     }
 
     if (username.length < 3 || username.length > 20) {
@@ -116,7 +131,8 @@ export async function registerUser(req, res) {
       passwordHash, 
       isActive: false,
       verifyCode, 
-      verifyExpiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
+      verifyExpiresAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 3 * 60 * 60 * 1000)),
+      birthday: birthdayStr,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       permissions: 1,
       lastLogin: null
