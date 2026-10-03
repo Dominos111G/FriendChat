@@ -77,7 +77,7 @@ export async function registerUser(req, res) {
     const password = req.body.password;
     const birthdayStr = String(req.body.birthday);
 
-    if (!username || !email || !password || !birthday) {
+    if (!username || !email || !password || !birthdayStr) {
       return res.status(400).json({ success: false, message: 'Some required fields are missing.' });
     }
 
@@ -124,6 +124,11 @@ export async function registerUser(req, res) {
 
     const verifyCode = Math.random().toString(36).slice(2, 8).toUpperCase();
     const passwordHash = await bcrypt.hash(password, 10);
+
+    if(true){
+      console.log(birthdayStr, birthday);
+      return res.status(200).json({ success: true, message: 'Registration successful. Please verify your account.' });
+    }
 
     await usersRef.add({ 
       username, 
