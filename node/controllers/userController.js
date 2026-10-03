@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
 import { FieldValue } from 'firebase-admin/firestore';
+import util from 'node:util';
 
 import { 
   getUsersCollection, getMessagesCollection, 
@@ -27,7 +28,6 @@ export async function loginUser(req, res) {
     const userDoc = snapshot.docs[0];
     const userData = userDoc.data();
 
-    // Sprawdzenie czy konto jest aktywowane
     if (!userData.isActive) {
       return res.status(403).json({ success: false, message: 'Account is not verified.' });
     }
@@ -37,31 +37,47 @@ export async function loginUser(req, res) {
       return res.status(401).json({ success: false, message: 'Invalid username or password.' });
     }
 
-    req.session.userId = userDoc.id;
-    req.session.username = userData.username;
+    const asyncOperations = [];
 
     if (rememberMe) {
       const rememberToken = randomBytes(32).toString('base64url');
       const tokensRef = getTokensCollection();
-      await tokensRef.add({
-        token: rememberToken,
-        userId: userDoc.id,
-        createdAt: FieldValue.serverTimestamp(),
-        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-      });
+      
+      asyncOperations.push(
+        tokensRef.add({
+          token: rememberToken,
+          userId: userDoc.id,
+          createdAt: FieldValue.serverTimestamp(),
+          expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        })
+      );
+      
       res.cookie('userToken', rememberToken, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
     }
 
     const loginDetailsRef = getLoginDetailsCollection();
-    await loginDetailsRef.add({
-      userId: userDoc.id,
-      ip: req.ip,
-      userAgent: req.get('user-agent'),
-      rememberMe: rememberMe,
-      loginAt: FieldValue.serverTimestamp()
-    });
+    
+    asyncOperations.push(
+      loginDetailsRef.add({
+        userId: userDoc.id,
+        ip: req.ip,
+        userAgent: req.get('user-agent'),
+        rememberMe: rememberMe,
+        loginAt: FieldValue.serverTimestamp()
+      }),
+      usersRef.doc(userDoc.id).update({ lastLogin: FieldValue.serverTimestamp() })
+    );
 
-    await usersRef.doc(userDoc.id).update({ lastLogin: FieldValue.serverTimestamp() });
+    await Promise.all(asyncOperations);
+
+    req.session.user = { 
+      id: userDoc.id, 
+      username: userData.username, 
+      permissions: userData.permissions 
+    };
+
+    const saveSession = util.promisify(req.session.save.bind(req.session));
+    await saveSession();
 
     return res.status(200).json({ success: true, message: 'Login successful.' });
   } catch (err) {
@@ -200,12 +216,29 @@ export async function verifyUserToken(req, res) {
       return res.status(401).json({ success: false, message: 'Token is invalid or expired.' });
     }
 
-    const tokenData = snapshot.docs[0].data();
+    const tokenDoc = snapshot.docs[0];
+    const tokenData = tokenDoc.data();
     if (tokenData.expiresAt && tokenData.expiresAt.toDate() < new Date()) {
       return res.status(401).json({ success: false, message: 'Token is invalid or expired.' });
     }
 
-    req.session.userId = tokenData.userId;
+    const usersRef = getUsersCollection();
+    const userDoc = await usersRef.doc(tokenData.userId).get();
+    
+    if (!userDoc.exists) {
+      return res.status(401).json({ success: false, message: 'User associated with token not found.' });
+    }
+    
+    const userData = userDoc.data();
+
+    req.session.user = { 
+      id: userDoc.id, 
+      username: userData.username, 
+      permissions: userData.permissions 
+    };
+
+    const saveSession = util.promisify(req.session.save.bind(req.session));
+    await saveSession();
 
     return res.status(200).json({ success: true, message: 'Token is valid.' });
   } catch (err) {

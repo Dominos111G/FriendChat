@@ -10,7 +10,7 @@
     <%- include('elements/header.ejs') %><br>
     <div class="shadow">
         <h2>Log in to our system</h2>
-        <form id="login">
+        <form id="loginForm">
             <label for="username">Username:</label><br>
             <input type="text" id="username" name="username" required><br>
         
@@ -20,7 +20,7 @@
         </form>
         
         <h2>Register to our system</h2>
-        <form id="registerForm" action="/register" method="POST">
+        <form id="registerForm">
             <label for="reg_name">Username:</label><br>
             <input type="text" id="reg_name" name="reg_name" required><br>
 
@@ -35,7 +35,7 @@
 
             <label for="reg_age">Birth date:</label><br>
             <input type="date" id="reg_age" name="reg_age" min="1900-01-01" max="2026-12-31" required><br>
-            <button type="button" id="reg_button" name="reg_button">Sign up</button>
+            <button type="submit" id="reg_button" name="reg_button">Sign up</button>
         </form>
     </div>
     <%- include('elements/footer.ejs') %>
@@ -50,6 +50,7 @@
             try {
                 const response = await fetch(url, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -62,7 +63,7 @@
                     throw new Error(result.message || `HTTP error! Status: ${response.status}`);
                 }
 
-                alert('Success: ' + result.message);
+                window.location.assign('/');
             } catch (error) {
                 console.error('Error sending action: ', error.message);
                 alert(`Error: ${error.message}`);
@@ -96,6 +97,7 @@
                     throw new Error(result.message || `HTTP error! Status: ${response.status}`);
                 }
 
+                window.location.assign('/verify-account');
                 alert('Success: ' + result.message);
             } catch (error) {
                 console.error('Error sending action: ', error.message);
@@ -104,21 +106,21 @@
                 document.getElementById('reg_button').disabled = false;
             }
             
-            const today = new Date();
-            today.setFullYear(today.getFullYear() - 18);
-            document.getElementById('reg_age').max =
-            today.toISOString().split('T')[0];
+            // const today = new Date();
+            // today.setFullYear(today.getFullYear() - 18);
+            // document.getElementById('reg_age').max =
+            // today.toISOString().split('T')[0];
         }
 
         
 
-        document.getElementById('login_button').addEventListener('click', (e) => {
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             document.getElementById('login_button').disabled = true;
             login_backend();
         });
 
-        document.getElementById('reg_button').addEventListener('click', (e) => {
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
             e.preventDefault();
             document.getElementById('reg_button').disabled = true;
             reg_backend();

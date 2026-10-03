@@ -35,7 +35,11 @@ const sessionMiddleware = session({
 app.use(sessionMiddleware);
 
 app.use(express.static(path.resolve('public')));
-app.get('/', (req, res) => { res.render('index', { username: req.session.username }); });
+app.get('/', (req, res) => {
+  const username = (req.session && req.session.user) ? req.session.user.username : null;
+  console.log(username);
+  res.render('index', { username }); 
+});
 app.get('/login', (req, res) => { res.render('login'); });
 app.get('/account', (req, res) => { res.render('account'); });
 app.get('/verify-account', (req, res) => { res.render('verify-account'); });
