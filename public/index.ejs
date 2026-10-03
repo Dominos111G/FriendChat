@@ -7,6 +7,16 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-
+  <%- include('elements/header.ejs') %>
+  <div id="panel">
+    <div class="hello"><h2>Welcome to Our Website <%= typeof username !== 'undefined' && username ? username : 'Guest' %></h2></div>
+    <button id="chat" onclick="window.location.href='/room/chat'">Textchat</button>
+      <% if(typeof username !== 'undefined' && username) { %>
+        <button id="video" onclick="window.location.href='/room/video'">Video chat</button>
+      <% } else { %>
+        <button id="video" class="disabled">Video chat</button>
+      <% } %>
+  </div>
+  <%- include('elements/footer.ejs') %>
 </body>
 </html>
