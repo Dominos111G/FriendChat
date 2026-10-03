@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+    <%- include('elements/header.ejs') %><br>
+    <div class="shadow">
+        <h2>Verify Account</h2>
+        <form id="verify">
+            <label for="email">Email:</label><br>
+            <input type="email" id="email" name="email" required><br>
+
+            <label for="code">Verification Code:</label><br>
+            <input type="text" id="code" name="code" required><br>
+            <button type="submit" id="verify_button" name="verify_button">Verify Account</button><br>
+        </form>
+    </div>
+    <%- include('elements/footer.ejs') %>
+    <script>
+        async function verify_backend() {
+            const url = '/api/user/verify';
+            const data = {
+                email: document.getElementById('email').value,
+                code: document.getElementById('code').value
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! Status: ${response.status}`);
+                }
+
+                alert('Success: ' + result.message);
+            } catch (error) {
+                console.error('Error sending action: ', error.message);
+                alert(`Error: ${error.message}`);
+            } finally {
+                document.getElementById('verify_button').disabled = false;
+            }
+        }
+
+        document.getElementById('verify_button').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('verify_button').disabled = true;
+            verify_backend();
+        });
+      </script>
+</body>
+</html>

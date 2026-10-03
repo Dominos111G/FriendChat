@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import { randomBytes } from 'node:crypto';
-import admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 import { 
   getUsersCollection, getMessagesCollection, 
@@ -46,7 +46,7 @@ export async function loginUser(req, res) {
       await tokensRef.add({
         token: rememberToken,
         userId: userDoc.id,
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: FieldValue.serverTimestamp(),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
       });
       res.cookie('userToken', rememberToken, { httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000 });
@@ -58,10 +58,10 @@ export async function loginUser(req, res) {
       ip: req.ip,
       userAgent: req.get('user-agent'),
       rememberMe: rememberMe,
-      loginAt: admin.firestore.FieldValue.serverTimestamp()
+      loginAt: FieldValue.serverTimestamp()
     });
 
-    await usersRef.doc(userDoc.id).update({ lastLogin: admin.firestore.FieldValue.serverTimestamp() });
+    await usersRef.doc(userDoc.id).update({ lastLogin: FieldValue.serverTimestamp() });
 
     return res.status(200).json({ success: true, message: 'Login successful.' });
   } catch (err) {
@@ -108,27 +108,20 @@ export async function registerUser(req, res) {
     }
 
     const usersRef = getUsersCollection();
-    const usernameSnapshot = await usersRef.where(admin.firestore.Filter.or(
-      admin.firestore.Filter.where('username', '==', username), 
-      admin.firestore.Filter.where('email', '==', email)
-    )).get();
+    const [usernameSnapshot, emailSnapshot] = await Promise.all([
+      usersRef.where('username', '==', username).get(),
+      usersRef.where('email', '==', email).get()
+    ]);
 
     if (!usernameSnapshot.empty) {
-      const existingDoc = usernameSnapshot.docs[0].data();
-      if (existingDoc.username === username) {
-        return res.status(409).json({ success: false, message: 'Username already exists.' });
-      } else {
-        return res.status(409).json({ success: false, message: 'Email already exists.' });
-      }
+      return res.status(409).json({ success: false, message: 'Username already exists.' });
+    }
+    if (!emailSnapshot.empty) {
+      return res.status(409).json({ success: false, message: 'Email already exists.' });
     }
 
     const verifyCode = Math.random().toString(36).slice(2, 8).toUpperCase();
     const passwordHash = await bcrypt.hash(password, 10);
-
-    if(true){
-      console.log(birthdayStr, birthday);
-      return res.status(200).json({ success: true, message: 'Registration successful. Please verify your account.' });
-    }
 
     await usersRef.add({ 
       username, 
@@ -136,9 +129,9 @@ export async function registerUser(req, res) {
       passwordHash, 
       isActive: false,
       verifyCode, 
-      verifyExpiresAt: admin.firestore.Timestamp.fromDate(new Date(Date.now() + 3 * 60 * 60 * 1000)),
+      verifyExpiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
       birthday: birthdayStr,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
       permissions: 1,
       lastLogin: null
     });

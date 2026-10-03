@@ -1,4 +1,4 @@
-import admin from 'firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 import { 
   getUsersCollection, getMessagesCollection, 
@@ -73,7 +73,7 @@ export async function createReport(req, res) {
       reportedObjectId: reportedObjectId,
       reportedObjectContent: reportedObjectContent,
       additionalInfo: additionalInfo,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     }); 
 
     return res.status(200).json({ success: true, message: 'User reported successfuly.' });
