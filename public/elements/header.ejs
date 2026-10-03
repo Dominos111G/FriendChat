@@ -3,7 +3,10 @@
     <h2 id="site-name">FRIENDS.US</h2>
     <div id="header-buttons">
         <button>HOME</button>
-        <button>SIGN IN</button>
-        <button>ACCOUNT</button>
+        <% if(typeof username !== 'undefined' && username) { %>
+            <button>ACCOUNT</button>
+        <% } else { %>
+            <button>SIGN IN</button>
+        <% } %>
     </div>
 </header>

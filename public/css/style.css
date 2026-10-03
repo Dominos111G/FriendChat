@@ -1,14 +1,50 @@
-*{
-    background-color: lightgrey;
-}
 body{
-    background-color: lightgrey;
+    background-color: white;
+    font-family: arial;
+    margin-top: 100px;
 }
-/* do sekcji czatu */
 #chat{
-    border: 3px solid black;
-    border-radius: 25px;
-    background-color: grey;
+    background-color: #1A1A1A;
+    color: white;
+    padding: 10px;
+    margin: 10px;
+    width:  25%;
+    height: 40px;
+}
+#chat:hover{
+    background-color: #333333;
+}
+#video{
+    background-color: #1A1A1A;
+    color: white;
+    padding: 10px;
+    margin: 10px;
+    width: 25%;
+    height: 40px;
+}
+#video:hover{
+    background-color: #333333;
+}
+.hello{
+    padding: 10px;
+    width: 100%;
     color: black;
-    font-size: medium;
+    text-align: center;
+    height: 50px;
+}
+#panel{
+    width: 50%;
+    height: 500px;
+    background-color: lightgrey;
+    text-align: center;
+    margin: auto;
+}
+a{
+    text-decoration: none;
+    color: white;
+}
+.disabled, .disabled:hover {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.4;
 }
