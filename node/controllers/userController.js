@@ -246,3 +246,170 @@ export async function verifyUserToken(req, res) {
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
+
+export async function updateMain(req, res) {
+  try {
+    const userId = req.session?.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User is not authenticated.' });
+    }
+    const body = req.body || {};
+    const action = typeof body.action === 'string' ? body.action.trim() : '';
+    if (!action) {
+      return res.status(400).json({ success: false, message: 'Action is required.' });
+    }
+
+    const usersRef = getUsersCollection();
+    const userRef = usersRef.doc(userId);
+    const userSnapshot = await userRef.get();
+    if (!userSnapshot.exists) {
+      return res.status(401).json({ success: false, message: 'Couldn\'t find user.' });
+    }
+
+    if (action === 'updateUsername') {
+      const newUsername = typeof body.username === 'string' ? body.username.trim() : '';
+      if (!newUsername) {
+        return res.status(400).json({ success: false, message: 'Username is required.' });
+      }
+
+      if (newUsername.length < 3 || newUsername.length > 20) {
+        return res.status(400).json({ success: false, message: 'Username must be between 3 and 20 characters long.' });
+      }
+      const snapshot = await usersRef.where('username', '==', newUsername).get();
+      if (snapshot.docs.some((doc) => doc.id !== userId)) {
+        return res.status(409).json({ success: false, message: 'Username already exists.' });
+      }
+      await userRef.update({ username: newUsername });
+      req.session.user.username = newUsername;
+      const saveSession = util.promisify(req.session.save.bind(req.session));
+      await saveSession();
+      return res.status(200).json({ success: true, message: 'Username updated successfully.' });
+    } else if (action === 'updateEmail') {
+      const newEmail = typeof body.email === 'string' ? body.email.trim() : '';
+      if (!newEmail) {
+        return res.status(400).json({ success: false, message: 'Email is required.' });
+      }
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(newEmail)) {
+        return res.status(400).json({ success: false, message: 'Invalid email format.' });
+      }
+      const snapshot = await usersRef.where('email', '==', newEmail).get();
+      if (snapshot.docs.some((doc) => doc.id !== userId)) {
+        return res.status(409).json({ success: false, message: 'Email already exists.' });
+      }
+      await userRef.update({ email: newEmail });
+      req.session.user.email = newEmail;
+      const saveSession = util.promisify(req.session.save.bind(req.session));
+      await saveSession();
+      return res.status(200).json({ success: true, message: 'Email updated successfully.' });
+    } else if (action === 'updatePassword') {
+      const oldPassword = body.oldPassword;
+      const newPassword = body.newPassword;
+
+      if (typeof newPassword !== 'string' || !newPassword ||
+          typeof oldPassword !== 'string' || !oldPassword) {
+        return res.status(400).json({ success: false, message: 'Both old and new passwords are required.' });
+      }
+      if (newPassword === oldPassword) {
+        return res.status(400).json({ success: false, message: 'New password must be different from the old password.' });
+      }
+      if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
+        return res.status(400).json({ success: false, message: 'Password must meet the required criteria.' });
+      }
+
+      const passwordMatch = await bcrypt.compare(oldPassword, userSnapshot.data().passwordHash);
+      if (!passwordMatch) {
+        return res.status(401).json({ success: false, message: 'Old password is incorrect.' });
+      }
+
+      const passwordHash = await bcrypt.hash(newPassword, 10);
+      await userRef.update({ passwordHash });
+      return res.status(200).json({ success: true, message: 'Password updated successfully.' });
+    } else {
+      return res.status(400).json({ success: false, message: 'Invalid action.' });
+    }
+  } catch (err) {
+    console.error('Error while updating main user info:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+}
+
+export async function updateAbout(req, res) {
+  try {
+    const userId = req.session?.user?.id;
+    if (!userId) {
+      return res.status(401).json({ success: false, message: 'User is not authenticated.' });
+    }
+
+    const body = req.body || {};
+    const updates = {};
+    const sessionUpdates = {};
+
+    if (body.birthday !== undefined) {
+      if (typeof body.birthday !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(body.birthday)) {
+        return res.status(400).json({ success: false, message: 'Invalid birthday format.' });
+      }
+
+      const [year, month, day] = body.birthday.split('-').map(Number);
+      const birthday = new Date(Date.UTC(year, month - 1, day));
+      if (birthday.getUTCFullYear() !== year ||
+          birthday.getUTCMonth() !== month - 1 ||
+          birthday.getUTCDate() !== day) {
+        return res.status(400).json({ success: false, message: 'Invalid birthday format.' });
+      }
+
+      const today = new Date();
+      let age = today.getUTCFullYear() - year;
+      if (today.getUTCMonth() < month - 1 ||
+          (today.getUTCMonth() === month - 1 && today.getUTCDate() < day)) {
+        age--;
+      }
+      if (age < 18 || age > 120) {
+        return res.status(400).json({ success: false, message: 'Age must be between 18 and 120.' });
+      }
+
+      updates.birthday = body.birthday;
+      sessionUpdates.birthday = body.birthday;
+      sessionUpdates.age = age;
+    }
+
+    if (body.gender !== undefined) {
+      if (!['-', 'Male', 'Female', 'Other'].includes(body.gender)) {
+        return res.status(400).json({ success: false, message: 'Invalid gender.' });
+      }
+      updates.gender = body.gender;
+      sessionUpdates.gender = body.gender;
+    }
+
+    if (body.country !== undefined) {
+      if (typeof body.country !== 'string') {
+        return res.status(400).json({ success: false, message: 'Country must be a string.' });
+      }
+      const country = body.country.trim();
+      if (!country || country.length > 56) {
+        return res.status(400).json({ success: false, message: 'Country must be between 1 and 56 characters long.' });
+      }
+      updates.country = country;
+      sessionUpdates.country = country;
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: 'At least one profile field is required.' });
+    }
+
+    const userRef = getUsersCollection().doc(userId);
+    const userSnapshot = await userRef.get();
+    if (!userSnapshot.exists) {
+      return res.status(401).json({ success: false, message: 'Couldn\'t find user.' });
+    }
+
+    await userRef.update(updates);
+    Object.assign(req.session.user, sessionUpdates);
+    const saveSession = util.promisify(req.session.save.bind(req.session));
+    await saveSession();
+
+    return res.status(200).json({ success: true, message: 'Profile updated successfully.' });
+  } catch (err) {
+    console.error('Error while updating about user info:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+}
