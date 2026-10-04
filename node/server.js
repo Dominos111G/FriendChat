@@ -34,21 +34,35 @@ const sessionMiddleware = session({
 });
 app.use(sessionMiddleware);
 
+const DEFAULT_SESSION = {
+  user: {
+    id: 0,
+    username: null,
+    email: null,
+    birthday: null,
+    age: null,
+    gender: null,
+    country: null,
+    permissions: 0,
+  }
+}
+function getSession(req) {
+  return { user: { ...DEFAULT_SESSION.user, ...req.session.user } };
+}
+
 app.use(express.static(path.resolve('public')));
 app.get('/', (req, res) => {
-  const username = (req.session && req.session.user) ? req.session.user.username : null;
-  console.log(username);
-  res.render('index', { username }); 
+  res.render('index', getSession(req)); 
 });
-app.get('/login', (req, res) => { res.render('login'); });
-app.get('/account', (req, res) => { res.render('account'); });
-app.get('/verify-account', (req, res) => { res.render('verify-account'); });
-app.get('/room/chat', (req, res) => { res.render('room/chat'); });
-app.get('/room/video', (req, res) => { res.render('room/video'); });
-app.get('/tou', (req, res) => { res.render('help/terms-of-use'); });
-app.get('/privacy-policy', (req, res) => { res.render('help/privacy-policy'); });
-app.get('/cookie-policy', (req, res) => { res.render('help/cookie-policy'); });
-app.get('/safety-and-health', (req, res) => { res.render('help/safety-and-health'); });
+app.get('/login', (req, res) => { res.render('login', getSession(req)); });
+app.get('/account', (req, res) => { res.render('account', getSession(req)); });
+app.get('/verify-account', (req, res) => { res.render('verify-account', getSession(req)); });
+app.get('/room/chat', (req, res) => { res.render('room/chat', getSession(req)); });
+app.get('/room/video', (req, res) => { res.render('room/video', getSession(req)); });
+app.get('/tou', (req, res) => { res.render('help/terms-of-use', getSession(req)); });
+app.get('/privacy-policy', (req, res) => { res.render('help/privacy-policy', getSession(req)); });
+app.get('/cookie-policy', (req, res) => { res.render('help/cookie-policy', getSession(req)); });
+app.get('/safety-and-health', (req, res) => { res.render('help/safety-and-health', getSession(req)); });
 // User API
 app.post('/api/user/verifyToken', verifyUserToken);
 app.post('/api/user/login', loginUser);
