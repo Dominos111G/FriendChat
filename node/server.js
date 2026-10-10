@@ -13,7 +13,7 @@ import {
   getLoginDetailsCollection, getTokensCollection,
   getReportsCollection
 } from './controllers/firebaseController.js';
-import { loginUser, registerUser, verifyUser, verifyUserToken, updateMain, updateAbout } from './controllers/userController.js';
+import { loginUser, registerUser, verifyUser, resendVerificationEmail, verifyUserToken, updateMain, updateAbout } from './controllers/userController.js';
 import { getReportHelper, createReport, getReport, removeReport } from './controllers/reportController.js';
 
 const app = express();
@@ -68,6 +68,7 @@ app.post('/api/user/verifyToken', verifyUserToken);
 app.post('/api/user/login', loginUser);
 app.post('/api/user/register', registerUser);
 app.post('/api/user/verify', verifyUser);
+app.post('/api/user/verify/resend', resendVerificationEmail);
 app.post('/api/user/update/main', updateMain); // username, email, password
 app.post('/api/user/update/about', updateAbout);
 // Reports API

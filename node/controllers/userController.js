@@ -8,6 +8,7 @@ import {
   getLoginDetailsCollection, getTokensCollection,
   getReportsCollection
 } from './firebaseController.js';
+import { sendActivationEmail } from '../verification/mailer.js';
 
 export async function loginUser(req, res) {
   try {
@@ -146,15 +147,86 @@ export async function registerUser(req, res) {
       isActive: false,
       verifyCode, 
       verifyExpiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
+      verifyEmailSentAt: new Date(),
       birthday: birthdayStr,
       createdAt: FieldValue.serverTimestamp(),
       permissions: 1,
       lastLogin: null
     });
 
+    await sendActivationEmail(email, verifyCode);
+
     return res.status(200).json({ success: true, message: 'Registration successful. Please verify your account.' });
   } catch (err) {
     console.error('Error while registering user:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+}
+
+export async function resendVerificationEmail(req, res) {
+  try {
+    const email = typeof req.body?.email === 'string' ? req.body.email.trim() : '';
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email is required.' });
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
+      return res.status(400).json({ success: false, message: 'Invalid email format.' });
+    }
+
+    const usersRef = getUsersCollection();
+    const snapshot = await usersRef.where('email', '==', email).get();
+    if (snapshot.empty) {
+      return res.status(404).json({ success: false, message: 'No unverified account found for this email.' });
+    }
+
+    const userRef = snapshot.docs[0].ref;
+    const verification = await usersRef.firestore.runTransaction(async (transaction) => {
+      const userSnapshot = await transaction.get(userRef);
+      if (!userSnapshot.exists || userSnapshot.data().isActive) {
+        return { alreadyVerified: true };
+      }
+
+      const userData = userSnapshot.data();
+      const lastSentAt = userData.verifyEmailSentAt;
+      const lastSentTime = lastSentAt instanceof Date
+        ? lastSentAt.getTime()
+        : lastSentAt?.toMillis?.();
+      const now = Date.now();
+      const cooldownMs = 2 * 60 * 1000;
+      if (Number.isFinite(lastSentTime) && now - lastSentTime < cooldownMs) {
+        return {
+          retryAfterSeconds: Math.ceil((cooldownMs - (now - lastSentTime)) / 1000)
+        };
+      }
+
+      const code = Math.random().toString(36).slice(2, 8).toUpperCase();
+      transaction.update(userRef, {
+        verifyCode: code,
+        verifyExpiresAt: new Date(now + 3 * 60 * 60 * 1000),
+        verifyEmailSentAt: new Date(now)
+      });
+      return { code };
+    });
+
+    if (verification.alreadyVerified) {
+      return res.status(400).json({ success: false, message: 'Account is already verified.' });
+    }
+    if (verification.retryAfterSeconds !== undefined) {
+      return res.status(429).json({
+        success: false,
+        message: 'You can request another verification email in two minutes.',
+        retryAfterSeconds: verification.retryAfterSeconds
+      });
+    }
+
+    const mailResult = await sendActivationEmail(email, verification.code);
+    if (!mailResult.success) {
+      return res.status(502).json({ success: false, message: 'Could not send verification email. Please try again later.' });
+    }
+
+    return res.status(200).json({ success: true, message: 'Verification email sent.' });
+  } catch (err) {
+    console.error('Error while resending verification email:', err);
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
 }
