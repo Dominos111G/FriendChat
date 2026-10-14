@@ -74,6 +74,11 @@ export async function loginUser(req, res) {
     req.session.user = { 
       id: userDoc.id, 
       username: userData.username, 
+      email: userData.email,
+      birthday: userData.birthday,
+      age: userData.age,
+      gender: userData.gender,
+      country: userData.country,
       permissions: userData.permissions 
     };
 
@@ -149,6 +154,7 @@ export async function registerUser(req, res) {
       verifyExpiresAt: new Date(Date.now() + 3 * 60 * 60 * 1000),
       verifyEmailSentAt: new Date(),
       birthday: birthdayStr,
+      age,
       createdAt: FieldValue.serverTimestamp(),
       permissions: 1,
       lastLogin: null
