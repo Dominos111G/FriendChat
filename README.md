@@ -40,5 +40,6 @@ dostępny jako `socket.connectionId` po zdarzeniu `connectionId`.
 - ejs@6.0.1
 - express-session@1.19.0
 - express@5.2.1
-- firebase-admin@14.4.0
+- firebase-admin@14.5.0
+- nodemailer@10.0.14
 - socket.io@4.8.3

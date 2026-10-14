@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>Verify Account</title>
     <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
@@ -18,6 +18,8 @@
             <input type="text" id="code" name="code" required><br>
             <button type="submit" id="verify_button" name="verify_button">Verify Account</button><br>
         </form>
+        <button type="button" id="resend_button">Resend verification email</button>
+        <p id="verification_message" aria-live="polite"></p>
     </div>
     <%- include('elements/footer.ejs') %>
     <script>
@@ -52,11 +54,86 @@
             }
         }
 
-        document.getElementById('verify_button').addEventListener('click', (e) => {
+        const verifyForm = document.getElementById('verify');
+        const verifyButton = document.getElementById('verify_button');
+        const resendButton = document.getElementById('resend_button');
+        const verificationMessage = document.getElementById('verification_message');
+
+        let resendTimer;
+        let cooldownActive = false;
+        function startResendCooldown(seconds) {
+            clearInterval(resendTimer);
+            let remaining = seconds;
+            cooldownActive = true;
+            resendButton.disabled = true;
+            resendButton.textContent = `Resend available in ${remaining}s`;
+            resendTimer = setInterval(() => {
+                remaining--;
+                if (remaining <= 0) {
+                    clearInterval(resendTimer);
+                    cooldownActive = false;
+                    resendButton.disabled = false;
+                    resendButton.textContent = 'Resend verification email';
+                    return;
+                }
+                resendButton.textContent = `Resend available in ${remaining}s`;
+            }, 1000);
+        }
+
+        resendButton.addEventListener('click', async () => {
+            const emailInput = document.getElementById('email');
+            if (!emailInput.reportValidity()) {
+                return;
+            }
+
+            resendButton.disabled = true;
+            verificationMessage.textContent = '';
+            try {
+                const response = await fetch('/api/user/verify/resend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: emailInput.value })
+                });
+                const result = await response.json();
+                if (!response.ok) {
+                    if (response.status === 429 && result.retryAfterSeconds) {
+                        startResendCooldown(result.retryAfterSeconds);
+                    } else {
+                        resendButton.disabled = false;
+                    }
+                    throw new Error(result.message || `HTTP error! Status: ${response.status}`);
+                }
+
+                verificationMessage.textContent = result.message;
+                startResendCooldown(120);
+            } catch (error) {
+                if (!cooldownActive) {
+                    resendButton.disabled = false;
+                }
+                console.error('Error resending verification email:', error.message);
+                verificationMessage.textContent = error.message;
+            }
+        });
+
+        verifyForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            document.getElementById('verify_button').disabled = true;
+            verifyButton.disabled = true;
             verify_backend();
         });
+
+        const params = new URLSearchParams(window.location.search);
+        const email = params.get('e');
+        const code = params.get('c');
+        if (email !== null) {
+            document.getElementById('email').value = email;
+        }
+        if (code !== null) {
+            document.getElementById('code').value = code;
+        }
+        if (email && code) {
+            verifyButton.disabled = true;
+            verify_backend();
+        }
       </script>
 </body>
 </html>
