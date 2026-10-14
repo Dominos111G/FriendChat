@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>My Account</title>
+  <style>
+    body { margin: 0; padding: 2rem 1rem; background: #f3f4f6; color: #1f2937; font: 16px/1.5 Arial, sans-serif; }
+    main { max-width: 640px; margin: auto; padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 12px #0002; }
+    h1 { margin-top: 0; }
+    dl { display: grid; grid-template-columns: 140px 1fr; gap: 12px; }
+    dt { color: #6b7280; font-weight: bold; }
+    dd { margin: 0; overflow-wrap: anywhere; }
+    @media (max-width: 420px) { dl { grid-template-columns: 1fr; gap: 2px; } dd { margin-bottom: 10px; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Account details</h1>
+    <% if (user.username) { %>
+      <dl>
+        <dt>Name</dt><dd><%= user.username || 'Not provided' %></dd>
+        <dt>Email</dt><dd><%= user.email || 'Not provided' %></dd>
+        <dt>Age</dt><dd><%= user.age || 'Not provided' %></dd>
+        <dt>Country</dt><dd><%= user.country || 'Not provided' %></dd>
+      </dl>
+    <% } else { %>
+      <p>Account details are unavailable. Please sign in to view your information.</p>
+    <% } %>
+  </main>
+</body>
+</html>

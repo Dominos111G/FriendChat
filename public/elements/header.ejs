@@ -2,11 +2,11 @@
 <header>
     <h2 id="site-name">FRIENDS.US</h2>
     <div id="header-buttons">
-        <button>HOME</button>
-        <% if(typeof username !== 'undefined' && username) { %>
-            <button>ACCOUNT</button>
+        <button onclick="window.location.href='/#'">HOME</button>
+        <% if(user.username) { %>
+            <button onclick="window.location.href='/account'">ACCOUNT</button>
         <% } else { %>
-            <button>SIGN IN</button>
+            <button onclick="window.location.href='/login'">SIGN IN</button>
         <% } %>
     </div>
 </header>
