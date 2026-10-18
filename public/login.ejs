@@ -66,7 +66,6 @@
                 window.location.assign('/');
             } catch (error) {
                 console.error('Error sending action: ', error.message);
-                alert(`Error: ${error.message}`);
             } finally {
                 document.getElementById('login_button').disabled = false;
             }
@@ -98,10 +97,9 @@
                 }
 
                 window.location.assign('/verify-account');
-                alert('Success: ' + result.message);
+                console.log('Success: ' + result.message);
             } catch (error) {
                 console.error('Error sending action: ', error.message);
-                alert(`Error: ${error.message}`);
             } finally {
                 document.getElementById('reg_button').disabled = false;
             }

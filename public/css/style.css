@@ -38,6 +38,8 @@ body{
     background-color: lightgrey;
     text-align: center;
     margin: auto;
+    border-radius: 25px;
+    border: 2px solid black;
 }
 a{
     text-decoration: none;
