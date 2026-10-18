@@ -175,6 +175,30 @@ export function registerServerSocket(io){
       delete connectedPairs[socket.id];
       delete connectedUsers[socket.id];
     });
+
+    socket.on('action', (data) => {
+      if (!data || typeof data !== 'object') {
+        return;
+      }
+
+      switch (data.action) {
+        case 'changeStatus':
+          changeUserStatus(connectionId, data.status);
+          console.log(`Użytkownik ${connectionId} zmienił status na: ${data.status}`);
+          break;
+
+        case 'message':
+          if (typeof data.message !== 'string') {
+            return;
+          }
+
+          console.log(`Wiadomość od ${connectionId}: ${data.message}`);
+          break;
+
+        default:
+          console.warn('Nieznana akcja:', data.action);
+      }
+    });
   });
 
   return async function socketServerLoop() {
