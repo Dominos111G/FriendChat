@@ -1,0 +1,7 @@
+body{
+    margin-top: 100px;
+}
+#chatBox{
+    max-height: 400px;
+    overflow-y: auto;
+}

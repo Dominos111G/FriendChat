@@ -3,31 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="/css/chat.css">
   <title>Document</title>
 </head>
 <body>
+  <%- include('../elements/header.ejs') %>
+  <div id="chatBox"></div>
   <div>
     <button id="StartButton">New Chat</button>
     <input type="text" name="messageBox" id="MessageBox">
     <button id="SendMessageButton">Send</button>
   </div>
 
+  <script>
+    function chat(message, type){
+      const chatBox = document.getElementById("chatBox");
+      if(chatBox){
+        const divElement = document.createElement("div");
+        const usernameElement = document.createElement("span");
+        const messageElement = document.createElement("span");
+        usernameElement.textContent = type + ": ";
+        messageElement.textContent = message;
+        divElement.appendChild(usernameElement);
+        divElement.appendChild(messageElement);
+        chatBox.appendChild(divElement);
+        switch(type){
+          case "client":
+            usernameElement.style.color = "green";
+          break;
+          case "server":
+            usernameElement.style.color = "grey";
+          break;
+          case "guest":
+            usernameElement.style.color = "blue";
+            break;
+          default:
+            usernameElement.style.color = "red";  
+        }
+    }
+  }
+  </script>
   <script src="/socket.io/socket.io.js"></script>
-  <script type="module">
+   <script type="module">
     import { initSocket } from "/js/socket.js";
-    import { initChatSocket } from "/js/sockets/chat-socket.js";
 
-    initSocket();
-    const chat = initChatSocket();
+    const socket = initSocket();
 
+    socket.on("message", (data) => {
+        if (!data) {
+            console.log("Recived empty data!");
+            return;
+        }
+        const sender = data.sender;
+        const message = data.message;
+        console.log(`${sender}: ${message}`);
+        chat(message, sender);
+    });
+    socket.on("connected", (data) => {
+        chat("Connected with user", "server");
+    });
+    socket.on("left", (data) => {
+        chat("User left the chat", "server");
+    });
+    function start() {
+        socket.emit("start");
+        console.log("Started chat successfully");
+    }
+    function send(message) {
+        socket.emit("message", { message });
+        console.log("Message sended successfully");
+    }
+    function leave() {
+        socket.emit("leave");
+        console.log("Left the chat successfully");
+    }
+ 
     const sendBtn = document.getElementById("SendMessageButton");
     const messageBox = document.getElementById("MessageBox");
     if (sendBtn && messageBox) {
       sendBtn.addEventListener("click", (e) => {
-        chat.send(messageBox.value);
+        send(messageBox.value);
         messageBox.value = "";
       });
     }
+    const startBtn = document.getElementById("StartButton");
+    var isChatStarted = false;
+    if (startBtn) {
+      startBtn.addEventListener("click", (e) => {
+        if(isChatStarted){
+          leave();
+          startBtn.textContent = "New Chat";
+          isChatStarted = false;
+          return;
+        }
+        isChatStarted = true;
+        start();
+        // startBtn.disabled = false;
+        startBtn.textContent = "Leave Chat";
+      });
+    }
   </script>
+  <%- include('../elements/footer.ejs') %>
 </body>
 </html>
