@@ -3,30 +3,109 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="css/account.css">
   <title>My Account</title>
-  <style>
-    body { margin: 0; padding: 2rem 1rem; background: #f3f4f6; color: #1f2937; font: 16px/1.5 Arial, sans-serif; }
-    main { max-width: 640px; margin: auto; padding: 1.5rem; background: white; border-radius: 10px; box-shadow: 0 2px 12px #0002; }
-    h1 { margin-top: 0; }
-    dl { display: grid; grid-template-columns: 140px 1fr; gap: 12px; }
-    dt { color: #6b7280; font-weight: bold; }
-    dd { margin: 0; overflow-wrap: anywhere; }
-    @media (max-width: 420px) { dl { grid-template-columns: 1fr; gap: 2px; } dd { margin-bottom: 10px; } }
-  </style>
 </head>
 <body>
-  <main>
+  
+  <%- include('elements/header.ejs') %>
+  <div class="panel">
     <h1>Account details</h1>
-    <% if (user.username) { %>
       <dl>
         <dt>Name</dt><dd><%= user.username || 'Not provided' %></dd>
         <dt>Email</dt><dd><%= user.email || 'Not provided' %></dd>
         <dt>Age</dt><dd><%= user.age || 'Not provided' %></dd>
         <dt>Country</dt><dd><%= user.country || 'Not provided' %></dd>
       </dl>
-    <% } else { %>
-      <p>Account details are unavailable. Please sign in to view your information.</p>
-    <% } %>
-  </main>
+      <!-- <button id="" class="">Delete Account</button> -->
+      <form id="update_password">
+        <label for="old_password">Old Password:</label><br>
+        <input type="password" id="old_password" name="old_password" required><br>
+
+        <label for="new_password">New Password:</label><br>
+        <input type="password" id="new_password" name="new_password" required><br>
+
+        <button type="submit" id="change-password">Change Password</button>
+      </form>
+
+      <form id="update_name">
+        <label for="new_name">New Username:</label><br>
+        <input type="text" id="new_name" name="new_name" required><br>
+
+        <button type="submit" id="change-name">Change Name</button>
+    </div>
+  <%- include('elements/footer.ejs') %>
+  <script>
+    async function changePassword() {
+            const url = '/api/user/update/main';
+            const data = {
+                action: "updatePassword",
+                newPassword: document.getElementById('new_password').value,
+                oldPassword: document.getElementById('old_password').value
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! Status: ${response.status}`);
+                }
+                alert(result.message);
+                console.log('Success: ' + result.message);
+            } catch (error) {
+                console.error('Error sending action: ', error.message);
+            } finally {
+                document.getElementById('change-password').disabled = false;
+            }
+        }
+      document.getElementById('update_password').addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('change-password').disabled = true;
+            changePassword();
+        });
+
+        async function changeName() {
+            const url = '/api/user/update/main';
+            const data = {
+                action: "updateUsername",
+                username: document.getElementById('new_name').value
+            };
+
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(result.message || `HTTP error! Status: ${response.status}`);
+                }
+                alert(result.message);
+                console.log('Success: ' + result.message);
+            } catch (error) {
+                console.error('Error sending action: ', error.message);
+            } finally {
+                document.getElementById('change-name').disabled = false;
+            }
+        }
+      document.getElementById('update_name').addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('change-name').disabled = true;
+            changeName();
+        });
+  </script>
 </body>
 </html>

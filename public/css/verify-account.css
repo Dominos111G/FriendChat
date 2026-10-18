@@ -1,0 +1,52 @@
+body{
+    background-color: white;
+    font-family: arial;
+    margin-top: 100px;
+}
+#chat{
+    background-color: #1A1A1A;
+    color: white;
+    padding: 10px;
+    margin: 10px;
+    width:  25%;
+    height: 40px;
+}
+#chat:hover{
+    background-color: #333333;
+}
+#video{
+    background-color: #1A1A1A;
+    color: white;
+    padding: 10px;
+    margin: 10px;
+    width: 25%;
+    height: 40px;
+}
+#video:hover{
+    background-color: #333333;
+}
+.hello{
+    padding: 10px;
+    width: 100%;
+    color: black;
+    text-align: center;
+    height: 50px;
+}
+#panel{
+    width: 50%;
+    height: 500px;
+    background-color: lightgrey;
+    text-align: center;
+    margin: auto;
+    border-radius: 25px;
+    border: 2px solid black;
+}
+a{
+    text-decoration: none;
+    color: white;
+}
+.disabled, .disabled:hover {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.4;
+}
