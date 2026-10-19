@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="/css/chat.css">
   <title>Document</title>
+
+  <!-- ADSENSE -->
+  <meta name="google-adsense-account" content="ca-pub-4659014092307821">
 </head>
 <body>
   <%- include('../elements/header.ejs') %>
@@ -16,13 +19,15 @@
   </div>
 
   <script>
+    let partnerName = null;
     function chat(message, type){
       const chatBox = document.getElementById("chatBox");
       if(chatBox){
+        const frendlyName = type == "server" ? "" : type == "client" ? "You: " : type === "partner" ? partnerName ? `${partnerName}: ` : "Guest: " : type + ": ";
         const divElement = document.createElement("div");
         const usernameElement = document.createElement("span");
         const messageElement = document.createElement("span");
-        usernameElement.textContent = type + ": ";
+        usernameElement.textContent = frendlyName;
         messageElement.textContent = message;
         divElement.appendChild(usernameElement);
         divElement.appendChild(messageElement);
@@ -30,11 +35,15 @@
         switch(type){
           case "client":
             usernameElement.style.color = "green";
-          break;
+            break;
           case "server":
-            usernameElement.style.color = "grey";
-          break;
-          case "guest":
+            messageElement.style.color = "grey";
+            break;
+          case "partner":
+            if (partnerName) {
+              usernameElement.style.color = "cyan";
+              break;
+            }
             usernameElement.style.color = "blue";
             break;
           default:
@@ -62,6 +71,10 @@
     socket.on("connected", (data) => {
         chat("Connected with user", "server");
     });
+    socket.on("paired", (data) => {
+        partnerName = data?.partner?.nick;
+        chat(partnerName ? `Connected with ${partnerName}` : "Connected with user", "server");
+    });
     socket.on("left", (data) => {
         chat("User left the chat", "server");
     });
@@ -70,8 +83,13 @@
         console.log("Started chat successfully");
     }
     function send(message) {
-        socket.emit("message", { message });
-        console.log("Message sended successfully");
+        socket.emit("message", { message }, (response) => {
+          if (!response?.success) {
+            chat(response?.message || "Message could not be sent.", "server");
+            return;
+          }
+          chat(response.message, "client");
+        });
     }
     function leave() {
         socket.emit("leave");
