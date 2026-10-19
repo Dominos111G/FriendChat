@@ -16,9 +16,14 @@ import {
 import { loginUser, registerUser, verifyUser, resendVerificationEmail, verifyUserToken, updateMain, updateAbout } from './controllers/userController.js';
 import { getReportHelper, createReport, getReport, removeReport } from './controllers/reportController.js';
 
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.join(__dirname, '..', 'public');
+
 const app = express();
 app.set('view engine', 'ejs');
-app.set('views', path.resolve('public'));
+app.set('views', publicDir);
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
@@ -50,7 +55,7 @@ function getSession(req) {
   return { user: { ...DEFAULT_SESSION.user, ...req.session.user } };
 }
 
-app.use(express.static(path.resolve('public')));
+app.use(express.static(publicDir));
 app.get('/', (req, res) => {
   res.render('index', getSession(req)); 
 });
