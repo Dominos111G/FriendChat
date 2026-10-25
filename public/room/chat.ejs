@@ -11,11 +11,10 @@
 </head>
 <body>
   <%- include('../elements/header.ejs') %>
-  <div id="chatBox"></div>
+  <div id="chatBox"></div><br>
   <div>
-    <button id="StartButton">New Chat</button>
-    <input type="text" name="messageBox" id="MessageBox">
-    <button id="SendMessageButton">Send</button>
+    <textarea name="messageBox" id="MessageBox" placeholder="Type your message here..."></textarea><br>
+    <button id="StartButton" onclick="Join()">New Chat</button>  <button id="SendMessageButton" onclick="send(messageBox.value)">Send</button>
   </div>
 
   <script>
@@ -138,6 +137,7 @@
       });
     }
   </script>
+  <script src="/js/sounds.js"></script>
   <%- include('../elements/footer.ejs') %>
 </body>
 </html>
