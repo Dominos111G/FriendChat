@@ -312,6 +312,11 @@ export async function verifyUserToken(req, res) {
     req.session.user = { 
       id: userDoc.id, 
       username: userData.username, 
+      email: userData.email,
+      birthday: userData.birthday,
+      age: userData.age,
+      gender: userData.gender,
+      country: userData.country,
       permissions: userData.permissions 
     };
 

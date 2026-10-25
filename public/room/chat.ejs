@@ -57,7 +57,17 @@
     import { initSocket } from "/js/socket.js";
 
     const socket = initSocket();
+    const startBtn = document.getElementById("StartButton");
+    const messageBox = document.getElementById("MessageBox");
+    const sendBtn = document.getElementById("SendMessageButton");
+    let isChatStarted = false;
 
+    socket.on("disconnect", () => {
+        partnerName = null;
+        isChatStarted = false;
+        if (startBtn) startBtn.textContent = "New Chat";
+        chat("Server connection lost. Reconnect and start a new chat.", "server");
+    });
     socket.on("message", (data) => {
         if (!data) {
             console.log("Recived empty data!");
@@ -73,9 +83,14 @@
     });
     socket.on("paired", (data) => {
         partnerName = data?.partner?.nick;
+        isChatStarted = true;
+        if (startBtn) startBtn.textContent = "Leave Chat";
         chat(partnerName ? `Connected with ${partnerName}` : "Connected with user", "server");
     });
     socket.on("left", (data) => {
+        partnerName = null;
+        isChatStarted = false;
+        if (startBtn) startBtn.textContent = "New Chat";
         chat("User left the chat", "server");
     });
     function start() {
@@ -83,12 +98,19 @@
         console.log("Started chat successfully");
     }
     function send(message) {
-        socket.emit("message", { message }, (response) => {
+        socket.timeout(5000).emit("message", { message }, (error, response) => {
+          if (error) {
+            chat("Message not sent: the server did not respond. Please try again.", "server");
+            return;
+          }
           if (!response?.success) {
-            chat(response?.message || "Message could not be sent.", "server");
+            chat(`Message not sent: ${response?.message || "Please try again."}`, "server");
             return;
           }
           chat(response.message, "client");
+          if (messageBox && messageBox.value === message) {
+            messageBox.value = "";
+          }
         });
     }
     function leave() {
@@ -96,16 +118,11 @@
         console.log("Left the chat successfully");
     }
  
-    const sendBtn = document.getElementById("SendMessageButton");
-    const messageBox = document.getElementById("MessageBox");
     if (sendBtn && messageBox) {
       sendBtn.addEventListener("click", (e) => {
         send(messageBox.value);
-        messageBox.value = "";
       });
     }
-    const startBtn = document.getElementById("StartButton");
-    var isChatStarted = false;
     if (startBtn) {
       startBtn.addEventListener("click", (e) => {
         if(isChatStarted){

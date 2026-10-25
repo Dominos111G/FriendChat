@@ -15,9 +15,9 @@ FRIEND CHAT to platforma internetowa do znajdowania przyjaciół i partnerów do
 ### KOMUNIKACJA
 1. Wysłanie wiadomości do serwera
 2. Weryfikacja wiadomości
-3. Zapis do bazy danych
+3. Zapis do bazy danych (jeszcze niezaimplementowany)
 4. Przesłanie do użytkownika/-ów
-5. Wygenerowanie otrzymanej treści jako HTML
+5. Wyświetlenie otrzymanej treści w interfejsie
 
 ### IDENTYFIKATOR POŁĄCZENIA SOCKET.IO
 Serwer przechowuje własny identyfikator aplikacyjny w `socket.data.connectionId`:
@@ -29,6 +29,13 @@ Serwer przechowuje własny identyfikator aplikacyjny w `socket.data.connectionId
 Drugie połączenie zalogowanego użytkownika jest odrzucane błędem
 `USER_ALREADY_CONNECTED`. Po stronie przeglądarki identyfikator aplikacyjny jest
 dostępny jako `socket.connectionId` po zdarzeniu `connectionId`.
+
+Klient Socket.IO łączy się z tym samym adresem, z którego otwarto stronę.
+Lokalnie można użyć `http://localhost:3000`; na serwerze Ubuntu strona i backend
+powinny być dostępne pod tą samą domeną. Jeśli serwer działa za reverse proxy
+(np. Nginx), proxy musi przekazywać żądania `/socket.io/` oraz obsługiwać
+WebSocket Upgrade. Połączenie z osobną domeną frontendu wymaga osobnej
+konfiguracji adresu Socket.IO i CORS.
 
 ## WERSJE PROGRAMÓW
 - NodeJS: **v26.8.2**

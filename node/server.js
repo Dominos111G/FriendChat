@@ -94,6 +94,6 @@ const socketServerLoop = registerServerSocket(io);
 const IP =  process.env.IP || '0.0.0.0';
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, IP, () => {
-  console.log(`Server running at http://${IP}:${PORT}`);
+  console.log(`Server listening on port ${PORT} (bind address: ${IP})`);
   socketServerLoop();
 });
