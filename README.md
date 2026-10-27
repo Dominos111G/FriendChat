@@ -26,11 +26,15 @@ Serwer przechowuje własny identyfikator aplikacyjny w `socket.data.connectionId
 - niezalogowany użytkownik otrzymuje identyfikator w formacie `socket_<socket.id>`.
 
 `socket.id` pozostaje transportowym identyfikatorem Socket.IO i nie jest nadpisywany.
-Drugie połączenie zalogowanego użytkownika jest odrzucane błędem
-`USER_ALREADY_CONNECTED`. Po stronie przeglądarki identyfikator aplikacyjny jest
-dostępny jako `socket.connectionId` po zdarzeniu `connectionId`.
+Jeśli dla zalogowanego użytkownika pojawi się nowe połączenie, serwer rozłącza
+poprzednie i przypisuje użytkownika do nowego. Dzięki temu odświeżenie strony
+nie blokuje ponownego połączenia. Poprzedni czat zostaje zakończony, a partner
+otrzymuje informację o opuszczeniu rozmowy. Po stronie przeglądarki identyfikator
+aplikacyjny jest dostępny jako `socket.connectionId` po zdarzeniu `connectionId`.
 
 Klient Socket.IO łączy się z tym samym adresem, z którego otwarto stronę.
+Domyślna konfiguracja Socket.IO zaczyna od transportu polling i próbuje
+zaktualizować połączenie do WebSocket, jeśli jest dostępny.
 Lokalnie można użyć `http://localhost:3000`; na serwerze Ubuntu strona i backend
 powinny być dostępne pod tą samą domeną. Jeśli serwer działa za reverse proxy
 (np. Nginx), proxy musi przekazywać żądania `/socket.io/` oraz obsługiwać

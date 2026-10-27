@@ -181,21 +181,18 @@ export function registerServerSocket(io){
 
   io.use((socket, next) => {
     const connectionId = getConnectionId(socket);
-    if (connectedUsers.has(connectionId)) {
-      const error = new Error('This user is already connected.');
-      error.data = { code: 'USER_ALREADY_CONNECTED', connectionId };
-      return next(error);
-    }
-
     socket.data.connectionId = connectionId;
     next();
   });
 
   io.on('connection', (socket) => {
     const connectionId = socket.data.connectionId;
-    if (connectedUsers.has(connectionId)) {
-      socket.disconnect(true);
-      return;
+    const previousUser = connectedUsers.get(connectionId);
+    if (previousUser) {
+      leaveChat(connectionId);
+      connectedUsers.delete(connectionId);
+      previousUser.socket.disconnect(true);
+      console.log(`Replaced previous socket for connection: ${connectionId}`);
     }
 
     console.log(`Socket connected: ${connectionId} (transport socket: ${socket.id})`);

@@ -84,8 +84,7 @@ app.post('/api/report/remove', removeReport);
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: true, methods: ['GET', 'POST'], credentials: true },
-  transports: ['websocket', 'polling']
+  cors: { origin: true, methods: ['GET', 'POST'], credentials: true }
 });
 io.engine.use(sessionMiddleware);
 
