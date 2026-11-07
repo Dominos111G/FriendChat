@@ -12,13 +12,14 @@
 <body>
   <%- include('elements/header.ejs') %>
   <div id="panel">
-    <div class="hello"><h2>Welcome to Our Website <%= user.username ? user.username : 'Guest' %></h2></div>
-    <button id="chat" onclick="window.location.href='/room/chat'">Textchat</button>
-      <% if (user.username) { %>
-        <button id="video" onclick="window.location.href='/room/video'">Video chat</button>
-      <% } else { %>
-        <button id="video" class="disabled">Video chat</button>
-      <% } %>
+    <div class="hello"><h2>Welcome <%= user.username ? user.username : 'Guest' %></h2></div>
+    <p>Here you can meet new people.</p>
+    <p>Simply click the button to start a conversation with a random user. You can also set preferences to prioritize during the search. If the conversation isn't interesting, you can skip to the next one. Good luck!</p>
+    <div>
+      <button id="chat" onclick="window.location.href='/room/chat'">Text chat</button>
+      <p>or</p>
+      <button id="video" <%= user.username ? "" : "class='disabled'" %> onclick="window.location.href='/room/video'">Video chat</button>
+    </div>
   </div>
   <%- include('elements/footer.ejs') %>
 </body>
