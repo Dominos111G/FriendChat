@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="google-adsense-account" content="ca-pub-4659014092307821">
+  <title>Privacy Policy | FRIEND CHAT</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/help.css">
+</head>
+<body>
+  <%- include('../elements/header.ejs') %>
+  <main class="help-page">
+    <article>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: 7 November 2026</p>
+      <p>This policy explains how FRIEND CHAT processes personal data. The service is intended for adults aged 18 and over. The operators and data controllers are Dominik Szczerbal and Wojciech Majchrzak, ul. Śmigielska 34, 64-030 Śmigiel, Poland (“we”, “us” or “the operators”). Contact us at <a href="mailto:support@friendchat.space">support@friendchat.space</a>.</p>
+
+      <h2>Personal data we process</h2>
+      <ul>
+        <li><strong>Account data:</strong> username, email address, date of birth, calculated age, password hash, account status and email-verification data. Passwords are stored as hashes rather than plain text.</li>
+        <li><strong>Profile data:</strong> details you provide or update, such as gender and country. Your chat profile (for example, nickname, age, gender and country) may be shared with the person you are matched with.</li>
+        <li><strong>Login security records:</strong> for each successful sign-in, we record your IP address, browser user-agent string, account identifier, whether you selected “Remember me” and the sign-in time. The user-agent may reveal browser, operating-system and device details. Failed sign-in attempts are not added to this login-record collection by the current application code.</li>
+        <li><strong>Safety reports:</strong> report and user identifiers, report type and category, the reported item identifier, any included content or additional information, an optional room identifier and the report time.</li>
+        <li><strong>Chat and connection data:</strong> messages are processed by our server for basic content checks and delivery to your matched partner. The current application code does not save message text to its database. Connection and matching information is processed while users are connected.</li>
+        <li><strong>Cookies:</strong> essential session cookies and an optional “Remember me” cookie. See our <a href="/cookie-policy">Cookie Policy</a>.</li>
+      </ul>
+      <p>The current application stores IP addresses and browser user-agent strings with successful login records. It does not attach these details to chat messages or safety-report records. Your internet or hosting provider may separately process connection data under its own arrangements.</p>
+
+      <h2>Purposes and legal bases</h2>
+      <p>We use account and profile data to create accounts and provide matching and chat; login details to secure accounts and investigate suspicious activity; and reports to assess safety concerns and enforce our rules. We process data needed to provide the service on the basis of our contractual relationship with you. For security and abuse prevention, we rely on our legitimate interests in protecting users and the service, balanced against your rights and interests. We may also process or disclose information where required by law or necessary to address a serious safety or security incident.</p>
+
+      <h2>Recipients and international processing</h2>
+      <p>Account, login and report records are stored in Google Firebase Cloud Firestore as configured by the operators. Verification emails are sent through the email-delivery provider configured for the service. These providers process data to provide their services. Storage locations and any international transfers depend on the relevant project and provider settings; contact us if you need more information about the configuration in use.</p>
+      <p>We do not sell personal data. We may share information with competent authorities when legally required or where necessary to address a serious safety or security incident.</p>
+
+      <h2>Retention</h2>
+      <p>Our intended retention period for successful-login security logs containing IP addresses and browser user-agent strings is two years. However, the current application does not automatically delete these records after two years, so this period is not technically enforced and records may remain longer until deletion is implemented.</p>
+      <p>There is currently no fixed retention period or automatic deletion schedule for account records or safety reports. They may remain in the database until the operators delete them or establish a retention process. This should be reviewed as the service develops.</p>
+      <p>Session cookies are configured to expire after up to seven days. The optional “Remember me” cookie is configured to expire after 30 days.</p>
+
+      <h2>Your rights</h2>
+      <p>Under the GDPR, where applicable, you may have the right to request access to, correction or deletion of your personal data, restriction of processing, data portability, or to object to processing based on legitimate interests. You may also lodge a complaint with a supervisory authority; in Poland, this is the President of the Personal Data Protection Office (UODO). To exercise a right or ask a question, email <a href="mailto:support@friendchat.space">support@friendchat.space</a>.</p>
+
+      <h2>Security and changes</h2>
+      <p>We use measures intended to protect personal data, but no internet service can guarantee absolute security. We may update this policy as the service changes. The latest version and its update date will be posted on this page.</p>
+    </article>
+  </main>
+  <%- include('../elements/footer.ejs') %>
+</body>
+</html>

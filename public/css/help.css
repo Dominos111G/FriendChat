@@ -1,0 +1,47 @@
+.help-page {
+  box-sizing: border-box;
+  width: min(900px, calc(100% - 32px));
+  margin: 24px auto 110px;
+  padding: 32px 40px;
+  background: #fff;
+  border: 1px solid #d6d6d6;
+  border-radius: 12px;
+  color: #222;
+  font-family: Arial, sans-serif;
+  line-height: 1.65;
+}
+
+.help-page h1,
+.help-page h2 {
+  line-height: 1.25;
+}
+
+.help-page h1 {
+  margin-top: 0;
+}
+
+.help-page h2 {
+  margin: 28px 0 8px;
+}
+
+.help-page .updated {
+  color: #555;
+  font-size: 0.9rem;
+}
+
+.help-page ul {
+  padding-left: 24px;
+}
+
+.help-page a {
+  color: #1558a6;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .help-page {
+    width: calc(100% - 20px);
+    margin: 16px auto 120px;
+    padding: 24px 20px;
+  }
+}
