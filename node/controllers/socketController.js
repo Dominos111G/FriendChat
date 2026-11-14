@@ -149,6 +149,7 @@ function tryToPairUsers() {
   for (const [socketIdA, userA] of searchingUsers) {
     for (const [socketIdB, userB] of searchingUsers) {
       if (socketIdA === socketIdB) continue;
+      if (userA.mode !== userB.mode) continue;
       // ADD LATER: Check if userB matches userA's preferences
 
       // Connect users
@@ -156,8 +157,8 @@ function tryToPairUsers() {
       connectedPairs.set(socketIdB, socketIdA);
       changeUserStatus(socketIdA, 'Connected');
       changeUserStatus(socketIdB, 'Connected');
-      userA.socket.emit('paired', { partner: userB.info });
-      userB.socket.emit('paired', { partner: userA.info });
+      userA.socket.emit('paired', { partner: userB.info, initiator: true });
+      userB.socket.emit('paired', { partner: userA.info, initiator: false });
       console.log(`Paired users: ${socketIdA} and ${socketIdB}`);
       break; // Exit inner loop after pairing
     }
@@ -174,6 +175,32 @@ function leaveChat(connectionId) {
       partner.socket.emit('left');
     }
   }
+}
+
+function validVideoDescription(data, type) {
+  return Boolean(
+    data &&
+    typeof data === 'object' &&
+    !Array.isArray(data) &&
+    data.type === type &&
+    typeof data.sdp === 'string' &&
+    data.sdp.length > 0 &&
+    data.sdp.length <= 100000
+  );
+}
+
+function validVideoCandidate(data) {
+  return Boolean(
+    data &&
+    typeof data === 'object' &&
+    !Array.isArray(data) &&
+    typeof data.candidate === 'string' &&
+    data.candidate.length <= 4096 &&
+    (data.sdpMid === null || typeof data.sdpMid === 'string' && data.sdpMid.length <= 256) &&
+    (data.sdpMLineIndex === null || Number.isInteger(data.sdpMLineIndex) && data.sdpMLineIndex >= 0) &&
+    (data.usernameFragment === undefined || data.usernameFragment === null ||
+      typeof data.usernameFragment === 'string' && data.usernameFragment.length <= 256)
+  );
 }
 
 export function registerServerSocket(io){
@@ -199,6 +226,7 @@ export function registerServerSocket(io){
     connectedUsers.set(connectionId, {
       socket,
       status: 'Idle',
+      mode: 'text',
       info: getSessionInfo(socket.request.session),
       pref: null
     });
@@ -243,9 +271,18 @@ export function registerServerSocket(io){
     });
 
     socket.on('start', () => {
+      const user = connectedUsers.get(connectionId);
+      if (user) user.mode = 'text';
       const newStatus = connectedUsers.get(connectionId)?.status === 'Searching' ? 'Idle' : 'Searching';
       changeUserStatus(connectionId, newStatus);
       console.log(`Użytkownik ${connectionId} zmienił status na: ${newStatus}`);
+    });
+    socket.on('startVideo', () => {
+      const user = connectedUsers.get(connectionId);
+      if (user) user.mode = 'video';
+      const newStatus = connectedUsers.get(connectionId)?.status === 'Searching' ? 'Idle' : 'Searching';
+      changeUserStatus(connectionId, newStatus);
+      console.log(`Użytkownik ${connectionId} rozpoczął wyszukiwanie rozmowy wideo`);
     });
     socket.on('message', (data, callback) => {
       const respond = typeof callback === 'function' ? callback : () => {};
@@ -282,6 +319,34 @@ export function registerServerSocket(io){
     socket.on('leave', () => {
       leaveChat(connectionId);
       console.log(`Użytkownik ${connectionId} opuścił pokój`);
+    });
+
+    const relayVideoSignal = (eventName, data, isValid, callback) => {
+      const respond = typeof callback === 'function' ? callback : () => {};
+      if (!isValid(data)) {
+        return respond({ success: false, message: 'Invalid video signal.' });
+      }
+
+      const user = connectedUsers.get(connectionId);
+      const partnerId = connectedPairs.get(connectionId);
+      const partner = partnerId !== undefined ? connectedUsers.get(partnerId) : null;
+      if (!user || user.mode !== 'video' || user.status !== 'Connected' ||
+          !partner || partner.mode !== 'video' || partner.status !== 'Connected') {
+        return respond({ success: false, message: 'You are not connected to a video chat partner.' });
+      }
+
+      partner.socket.emit(eventName, data);
+      return respond({ success: true });
+    };
+
+    socket.on('video:offer', (data, callback) => {
+      relayVideoSignal('video:offer', data, value => validVideoDescription(value, 'offer'), callback);
+    });
+    socket.on('video:answer', (data, callback) => {
+      relayVideoSignal('video:answer', data, value => validVideoDescription(value, 'answer'), callback);
+    });
+    socket.on('video:candidate', (data, callback) => {
+      relayVideoSignal('video:candidate', data, validVideoCandidate, callback);
     });
   });
 

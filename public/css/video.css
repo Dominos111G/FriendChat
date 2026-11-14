@@ -1,0 +1,16 @@
+.videos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.video {
+  width: 49%;
+  height: auto;
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
+video {
+  width: 100%;
+  height: auto;
+}

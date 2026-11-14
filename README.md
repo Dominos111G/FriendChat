@@ -19,6 +19,14 @@ FRIEND CHAT to platforma internetowa do znajdowania przyjaciół i partnerów do
 4. Przesłanie do użytkownika/-ów
 5. Wyświetlenie otrzymanej treści w interfejsie
 
+### ROZMOWA WIDEO
+1. Po kliknięciu „New Chat” przeglądarka prosi o dostęp do kamery i mikrofonu.
+2. Użytkownik trafia do kolejki wideo, oddzielnej od kolejki czatu tekstowego.
+3. Socket.IO przekazuje między sparowanymi użytkownikami ofertę, odpowiedź i kandydatów ICE.
+4. WebRTC zestawia połączenie audio/wideo między przeglądarkami; serwer aplikacji nie odbiera ani nie zapisuje mediów rozmowy.
+
+Dostęp do kamery i mikrofonu wymaga bezpiecznego kontekstu (HTTPS lub localhost). Konfiguracja zawiera publiczny serwer STUN, ale nie serwer TURN, więc niektóre sieci mogą uniemożliwić zestawienie połączenia.
+
 ### IDENTYFIKATOR POŁĄCZENIA SOCKET.IO
 Serwer przechowuje własny identyfikator aplikacyjny w `socket.data.connectionId`:
 
