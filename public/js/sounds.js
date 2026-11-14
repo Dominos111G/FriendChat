@@ -1,7 +1,11 @@
- function Join(){
-    const joinSound = new Audio('https://www.soundjay.com/nature_c2026/sounds/river-4.mp3');
-    joinSound.play().catch(error => {
-        console.error('Error playing join sound:', error);
-    });
+function playSound(soundName){
+    let sound;
+    try {
+        sound = new Audio(`../sounds/${soundName}.mp3`);
+        sound.play().catch((error) => {
+            console.error(`Error playing ${soundName} sound:`, error);
+        });
+    } catch (err) {
+        console.error(`Error loading ${soundName} sound:`, err);
+    }
 }
-
