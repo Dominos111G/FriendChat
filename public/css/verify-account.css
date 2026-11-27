@@ -19,7 +19,7 @@ label{
     padding: 30px;
 }
 button{
-    background-color: var(--primary-color);
+    background-color: var(--dark-buttons);
     color: white;
     padding: 5px;
     margin: 5px;
@@ -27,5 +27,5 @@ button{
     border: 1px solid black;
 }
 button:hover{
-    background-color: var(--secondary-color);
+    background-color: var(--dark-hover);
 }

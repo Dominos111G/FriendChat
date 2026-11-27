@@ -33,11 +33,9 @@
 #panel{
     width: 50%;
     height: 500px;
-    background-color: var(--secondary-color);
+    background-color: var(--dark-panels);
     text-align: center;
     margin: 24px auto 110px;
     border-radius: 25px;
-    background-color: grey;
-    color: black;
     font-size: medium;
 }

@@ -1,5 +1,5 @@
 header {
-    background-color: var(--dark-panels);
+    background-color: var(--dark-header);
     font-family: Arial, sans-serif;
     top: 0;
     left: 0;
@@ -23,7 +23,7 @@ header {
 }
 
 #header-buttons button {
-    background-color: var(--primary-color);
+    background-color: var(--dark-buttons);
     color: White;              
     padding: 8px 16px;         
     font-weight: bold;   
@@ -32,5 +32,5 @@ header {
 }
 
 #header-buttons button:hover {
-    background-color: var(--secondary-color); 
+    background-color: var(--dark-hover); 
 }

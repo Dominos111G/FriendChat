@@ -1,7 +1,7 @@
 .panel{ 
     width: 50%;
     height: 500px;
-    background-color: #242424;
+    background-color: var(--dark-panels);
     text-align: center;
     margin: 24px auto 110px;
     border-radius: 25px;
@@ -36,7 +36,7 @@ label{
     font-weight: bolder;
 }
 button{
-    background-color: #303030;
+    background-color: var(--dark-buttons);
     color: white;
     padding: 5px;
     margin:5px;
@@ -44,7 +44,7 @@ button{
     border: 1px solid black;
 }
 button:hover{
-    background-color: #414141;
+    background-color: var(--dark-hover);
 }
 @media (max-width: 420px){
     dl{ 
