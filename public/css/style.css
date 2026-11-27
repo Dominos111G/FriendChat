@@ -1,12 +1,41 @@
-*{
-    background-color: lightgrey;
-}
-body{
-    background-color: lightgrey;
-}
-/* do sekcji czatu */
 #chat{
-    border: 3px solid black;
+    background-color: var(--dark-buttons);
+    color: white;
+    padding: 10px;
+    margin: 10px;
+    width:  25%;
+    height: 40px;
+    border-radius: 5px;
+    border: 1px solid black;
+}
+#chat:hover{
+    background-color: var(--dark-hover);
+}
+#video{
+    background-color: var(--dark-buttons);
+    color: white;
+    padding: 10px;
+    margin: 10px;
+    width: 25%;
+    height: 40px;
+    border-radius: 5px;
+    border: 1px solid black;
+}
+#video:hover{
+    background-color: var(--dark-hover);
+}
+.hello{
+    padding: 10px;
+    width: 100%;
+    text-align: center;
+    height: 50px;
+}
+#panel{
+    width: 50%;
+    height: 500px;
+    background-color: var(--secondary-color);
+    text-align: center;
+    margin: 24px auto 110px;
     border-radius: 25px;
     background-color: grey;
     color: black;

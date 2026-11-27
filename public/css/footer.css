@@ -1,5 +1,5 @@
 footer{
-    background-color: lightgrey;
+    background-color: var(--dark-panels);
     font-family: arial;
     position: fixed;
     bottom: 0;

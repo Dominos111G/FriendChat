@@ -1,0 +1,19 @@
+:root{
+    --dark-color: #E6E6E6;
+    --dark-background: #101010;
+    --dark-panels: #242424;
+    --dark-header: #181818;
+    --dark-footer: #181818;
+    --dark-buttons: #303030;
+    --dark-hover: #414141;
+    --light-color: black;
+    --light-background: #101010;
+    --light-panels: #242424;
+    --light-buttons: #303030;
+    --light-hover: #414141;
+}
+body{
+    margin: 0px !important;
+    background-color: var(--dark-background);
+    color: var(--dark-color);
+}

@@ -1,0 +1,31 @@
+input{
+    background-color: white;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid black;
+}
+label{
+    font-weight: bolder;
+}
+.shadow{
+    height: auto;
+    width: 500px;
+    background-color: var(--dark-panels);
+    border: 2px solid black;
+    border-radius: 25px;
+    align-items: center;
+    text-align: center;
+    margin: 24px auto 110px;
+    padding: 30px;
+}
+button{
+    background-color: var(--primary-color);
+    color: white;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid black;
+}
+button:hover{
+    background-color: var(--secondary-color);
+}
