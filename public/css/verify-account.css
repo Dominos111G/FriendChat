@@ -1,52 +1,31 @@
-body{
+input{
     background-color: white;
-    font-family: arial;
-    margin-top: 100px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid black;
 }
-#chat{
-    background-color: #1A1A1A;
-    color: white;
-    padding: 10px;
-    margin: 10px;
-    width:  25%;
-    height: 40px;
+label{
+    font-weight: bolder;
 }
-#chat:hover{
-    background-color: #333333;
-}
-#video{
-    background-color: #1A1A1A;
-    color: white;
-    padding: 10px;
-    margin: 10px;
-    width: 25%;
-    height: 40px;
-}
-#video:hover{
-    background-color: #333333;
-}
-.hello{
-    padding: 10px;
-    width: 100%;
-    color: black;
-    text-align: center;
-    height: 50px;
-}
-#panel{
-    width: 50%;
-    height: 500px;
-    background-color: lightgrey;
-    text-align: center;
-    margin: auto;
-    border-radius: 25px;
+.shadow{
+    height: auto;
+    width: 500px;
+    background-color: var(--dark-panels);
     border: 2px solid black;
+    border-radius: 25px;
+    align-items: center;
+    text-align: center;
+    margin: 24px auto 110px;
+    padding: 30px;
 }
-a{
-    text-decoration: none;
+button{
+    background-color: var(--dark-buttons);
     color: white;
+    padding: 5px;
+    margin: 5px;
+    border-radius: 5px;
+    border: 1px solid black;
 }
-.disabled, .disabled:hover {
-    cursor: not-allowed;
-    pointer-events: none;
-    opacity: 0.4;
+button:hover{
+    background-color: var(--dark-hover);
 }

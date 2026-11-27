@@ -1,20 +1,43 @@
-body{
-    margin-top: 100px;
-}
 #chatBox{
-    background-color: #f1f1f1;
-    height: 400px;
+    margin-top: 24px;
+    margin-left: 15%;
+    margin-right: 15%;
+    background-color: var(--dark-panels);
+    height: 600px;
     max-height: 400px;
     height: 400px;
     overflow-y: auto;
-    width: 100%;
+    width: 70%;
     text-align: left;
     align-items: center;
-    background-color: lightgrey;
+    border: 1px solid black;
+    border-radius: 12px;
 }
 textarea{
-  width: 200px;             
-  resize: none;        
-  overflow-y: hidden;  
-  field-sizing: content;
+    width: 50%;             
+    resize: none;        
+    field-sizing: content;
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 10px;
+}
+#buttons{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+    gap: 1%
+}
+#StartButton, #SendMessageButton{
+    padding: 10px;
+    width: 9%;
+    cursor: pointer;
+    border: 1px solid black;
+    border-radius: 5px;
+    top: 0; 
+    background-color: var(--dark-buttons);
+    color: White;
+}
+#StartButton:hover, #SendMessageButton:hover{
+    background-color: var(--dark-hover);
 }

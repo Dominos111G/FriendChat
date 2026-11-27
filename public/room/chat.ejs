@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <link rel="stylesheet" href="/css/all.css">
   <link rel="stylesheet" href="/css/chat.css">
   <title>FriendChat - Text Chat</title>
 
@@ -12,9 +13,10 @@
 <body>
   <%- include('../elements/header.ejs') %>
   <div id="chatBox"></div><br>
-  <div>
-    <textarea name="messageBox" id="MessageBox" placeholder="Type your message here..."></textarea><br>
-    <button id="StartButton">New Chat</button>  <button id="SendMessageButton">Send</button>
+  <div id="buttons">
+    <button id="StartButton">New Chat</button>
+    <textarea name="messageBox" id="MessageBox" placeholder="Type your message here..."></textarea>
+    <button id="SendMessageButton">Send</button>
   </div>
 
   <script>

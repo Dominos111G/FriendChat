@@ -1,14 +1,9 @@
-body{
-    background-color: white;
-    font-family: arial;
-    margin-top: 100px;
-}
 .panel{ 
     width: 50%;
     height: 500px;
-    background-color: lightgrey;
+    background-color: var(--dark-panels);
     text-align: center;
-    margin: auto;
+    margin: 24px auto 110px;
     border-radius: 25px;
     border: 2px solid black;
 }
@@ -24,7 +19,7 @@ dl{
     gap: 12px; 
 }
 dt{ 
-    color: rgb(59, 59, 59); 
+    color: gray; 
     font-weight: bold; 
 }
 dd{ 
@@ -41,13 +36,15 @@ label{
     font-weight: bolder;
 }
 button{
-    background-color: #1A1A1A;
+    background-color: var(--dark-buttons);
     color: white;
     padding: 5px;
     margin:5px;
+    border-radius: 5px;
+    border: 1px solid black;
 }
 button:hover{
-    background-color: #333333;
+    background-color: var(--dark-hover);
 }
 @media (max-width: 420px){
     dl{ 
