@@ -10,11 +10,25 @@ import {
 } from './firebaseController.js';
 import { sendActivationEmail } from '../verification/mailer.js';
 
+function getSessionUser(userDoc) {
+  const userData = userDoc.data();
+  return {
+    id: userDoc.id,
+    username: userData.username,
+    email: userData.email,
+    birthday: userData.birthday,
+    age: userData.age,
+    gender: userData.gender,
+    country: userData.country,
+    permissions: userData.permissions
+  };
+}
+
 export async function loginUser(req, res) {
   try {
     const username = req.body.username;
     const password = req.body.password;
-    const rememberMe = (Boolean(req.body.rememberMe) || false);
+    const remember = (Boolean(req.body.remember) || false);
 
     if (!username || !password) {
       return res.status(400).json({ success: false, message: 'Some required fields are missing.' });
@@ -40,7 +54,7 @@ export async function loginUser(req, res) {
 
     const asyncOperations = [];
 
-    if (rememberMe) {
+    if (remember) {
       const rememberToken = randomBytes(32).toString('base64url');
       const tokensRef = getTokensCollection();
       
@@ -63,7 +77,7 @@ export async function loginUser(req, res) {
         userId: userDoc.id,
         ip: req.ip,
         userAgent: req.get('user-agent'),
-        rememberMe: rememberMe,
+        remember: remember,
         loginAt: FieldValue.serverTimestamp()
       }),
       usersRef.doc(userDoc.id).update({ lastLogin: FieldValue.serverTimestamp() })
@@ -167,6 +181,74 @@ export async function registerUser(req, res) {
     console.error('Error while registering user:', err);
     return res.status(500).json({ success: false, message: 'Internal server error.' });
   }
+}
+
+export async function userLogout(req, res) {
+  try {
+    const rememberToken = req.headers.cookie
+      ?.split(';')
+      .map((cookie) => cookie.trim())
+      .find((cookie) => cookie.startsWith('userToken='))
+      ?.slice('userToken='.length);
+
+    const destroySession = util.promisify(req.session.destroy.bind(req.session));
+    await destroySession();
+
+    res.clearCookie('connect.sid', { path: '/' });
+    res.clearCookie('userToken', { path: '/' });
+
+    if (rememberToken) {
+      const tokensRef = getTokensCollection();
+      const snapshot = await tokensRef.where('token', '==', rememberToken).get();
+      await Promise.all(snapshot.docs.map((tokenDoc) => tokenDoc.ref.delete()));
+    }
+
+    return res.redirect(303, '/');
+  } catch (err) {
+    console.error('Error while logging out:', err);
+    return res.status(500).json({ success: false, message: 'Internal server error.' });
+  }
+}
+
+export async function restoreUserFromToken(req) {
+  if (req.session?.user?.id) {
+    return false;
+  }
+
+  const rememberToken = req.headers.cookie
+    ?.split(';')
+    .map((cookie) => cookie.trim())
+    .find((cookie) => cookie.startsWith('userToken='))
+    ?.slice('userToken='.length);
+
+  if (!rememberToken) {
+    return false;
+  }
+
+  const tokensRef = getTokensCollection();
+  const snapshot = await tokensRef.where('token', '==', rememberToken).get();
+  if (snapshot.empty) {
+    return false;
+  }
+
+  const tokenData = snapshot.docs[0].data();
+  const expiresAt = tokenData.expiresAt?.toDate?.() ?? tokenData.expiresAt;
+  if (expiresAt) {
+    const expiresAtTime = new Date(expiresAt).getTime();
+    if (!Number.isFinite(expiresAtTime) || expiresAtTime <= Date.now()) {
+      return false;
+    }
+  }
+
+  const userDoc = await getUsersCollection().doc(tokenData.userId).get();
+  if (!userDoc.exists || !userDoc.data().isActive) {
+    return false;
+  }
+
+  req.session.user = getSessionUser(userDoc);
+  const saveSession = util.promisify(req.session.save.bind(req.session));
+  await saveSession();
+  return true;
 }
 
 export async function resendVerificationEmail(req, res) {
@@ -307,18 +389,7 @@ export async function verifyUserToken(req, res) {
       return res.status(401).json({ success: false, message: 'User associated with token not found.' });
     }
     
-    const userData = userDoc.data();
-
-    req.session.user = { 
-      id: userDoc.id, 
-      username: userData.username, 
-      email: userData.email,
-      birthday: userData.birthday,
-      age: userData.age,
-      gender: userData.gender,
-      country: userData.country,
-      permissions: userData.permissions 
-    };
+    req.session.user = getSessionUser(userDoc);
 
     const saveSession = util.promisify(req.session.save.bind(req.session));
     await saveSession();

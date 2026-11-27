@@ -6,7 +6,9 @@
         <button onclick="window.location.href='/#'">HOME</button>
         <% if(user.username) { %>
             <button onclick="window.location.href='/account'">ACCOUNT</button>
-            <button onclick="window.location.href='/logout'">LOGOUT</button>
+            <form action="/logout" method="post">
+                <button type="submit">LOGOUT</button>
+            </form>
         <% } else { %>
             <button onclick="window.location.href='/login'">SIGN IN</button>
         <% } %>

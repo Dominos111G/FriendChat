@@ -20,6 +20,10 @@
         
             <label for="password">Password:</label><br>
             <input type="password" id="password" name="password" required><br>
+
+            <label for="remember">Remember:</label>
+            <input type="checkbox" name="remember" id="remember"><br>
+
             <button type="submit" id="login_button" name="login_button">Sign in</button><br>
         </form>
         
@@ -48,7 +52,8 @@
             const url = '/api/user/login';
             const data = {
                 username: document.getElementById('username').value,
-                password: document.getElementById('password').value
+                password: document.getElementById('password').value,
+                remember: document.getElementById('remember').checked
             };
 
             try {

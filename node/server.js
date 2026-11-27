@@ -13,7 +13,7 @@ import {
   getLoginDetailsCollection, getTokensCollection,
   getReportsCollection
 } from './controllers/firebaseController.js';
-import { loginUser, registerUser, verifyUser, resendVerificationEmail, verifyUserToken, updateMain, updateAbout } from './controllers/userController.js';
+import { loginUser, registerUser, userLogout, restoreUserFromToken, verifyUser, resendVerificationEmail, verifyUserToken, updateMain, updateAbout } from './controllers/userController.js';
 import { getReportHelper, createReport, getReport, removeReport } from './controllers/reportController.js';
 
 import { fileURLToPath } from 'url';
@@ -56,8 +56,16 @@ function getSession(req) {
 }
 
 app.use(express.static(publicDir));
-app.get('/', (req, res) => {
-  res.render('index', getSession(req)); 
+app.get('/', async (req, res) => {
+  try {
+    if (!req.session.user?.id) {
+      await restoreUserFromToken(req);
+    }
+    return res.render('index', getSession(req));
+  } catch (err) {
+    console.error('Error while restoring user session:', err);
+    return res.status(500).send('Internal server error.');
+  }
 });
 app.get('/login', (req, res) => { res.render('login', getSession(req)); });
 app.get('/account', (req, res) => { res.render('account', getSession(req)); });
@@ -69,6 +77,7 @@ app.get('/privacy-policy', (req, res) => { res.render('help/privacy-policy', get
 app.get('/cookie-policy', (req, res) => { res.render('help/cookie-policy', getSession(req)); });
 app.get('/safety-and-health', (req, res) => { res.render('help/safety-and-health', getSession(req)); });
 // User API
+app.post('/logout', userLogout);
 app.post('/api/user/verifyToken', verifyUserToken);
 app.post('/api/user/login', loginUser);
 app.post('/api/user/register', registerUser);
