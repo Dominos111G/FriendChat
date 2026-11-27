@@ -1,11 +1,18 @@
 {
+  "name": "friendchat",
+  "type": "module",
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "dotenv": "^17.4.2",
     "ejs": "^6.0.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "firebase-admin": "^14.4.0",
+    "firebase-admin": "^14.5.0",
+    "nodemailer": "^10.0.14",
     "socket.io": "^4.8.3"
+  },
+  "allowScripts": {
+    "@firebase/util@1.15.3": true,
+    "protobufjs@7.6.6": true
   }
 }

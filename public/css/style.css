@@ -39,3 +39,8 @@
     border-radius: 25px;
     font-size: medium;
 }
+.disabled, .disabled:hover {
+    cursor: not-allowed;
+    pointer-events: none;
+    opacity: 0.4;
+}

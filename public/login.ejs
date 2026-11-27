@@ -6,12 +6,15 @@
     <title>FriendChat - Login</title>
     <link rel="stylesheet" href="/css/all.css">
     <link rel="stylesheet" href="css/login.css">
+    
+    <!-- ADSENSE -->
+    <meta name="google-adsense-account" content="ca-pub-4659014092307821">
 </head>
 <body>
     <%- include('elements/header.ejs') %><br>
     <div class="shadow">
         <h2>Log in to our system</h2>
-        <form id="login">
+        <form id="loginForm">
             <label for="username">Username:</label><br>
             <input type="text" id="username" name="username" required><br>
         
@@ -21,7 +24,7 @@
         </form>
         
         <h2>Register to our system</h2>
-        <form id="registerForm" action="/register" method="POST">
+        <form id="registerForm">
             <label for="reg_name">Username:</label><br>
             <input type="text" id="reg_name" name="reg_name" required><br>
 
@@ -34,9 +37,9 @@
             <label for="reg_confirmPassword">Confirm password:</label><br>
             <input type="password" id="reg_confirmPassword" name="reg_confirmPassword" required><br>
 
-            <label for="reg_age">I confirm that i'm 18+</label><br>
-            <input type="checkbox" id="reg_age" name="reg_age" required><br>
-            <button type="button" id="reg_button" name="reg_button">Sign up</button>
+            <label for="reg_age">Birth date:</label><br>
+            <input type="date" id="reg_age" name="reg_age" min="1900-01-01" max="2026-12-31" required><br>
+            <button type="submit" id="reg_button" name="reg_button">Sign up</button>
         </form>
     </div>
     <%- include('elements/footer.ejs') %>
@@ -51,6 +54,7 @@
             try {
                 const response = await fetch(url, {
                     method: 'POST',
+                    credentials: 'same-origin',
                     headers: {
                         'Content-Type': 'application/json'
                     },
@@ -63,10 +67,9 @@
                     throw new Error(result.message || `HTTP error! Status: ${response.status}`);
                 }
 
-                alert('Success: ' + result.message);
+                window.location.assign('/');
             } catch (error) {
                 console.error('Error sending action: ', error.message);
-                alert(`Error: ${error.message}`);
             } finally {
                 document.getElementById('login_button').disabled = false;
             }
@@ -78,7 +81,8 @@
                 username: document.getElementById('reg_name').value,
                 email: document.getElementById('reg_email').value,
                 password: document.getElementById('reg_password').value,
-                confirmPassword: document.getElementById('reg_confirmPassword').value
+                confirmPassword: document.getElementById('reg_confirmPassword').value,
+                birthday: document.getElementById('reg_age').value
             };
 
             try {
@@ -96,22 +100,29 @@
                     throw new Error(result.message || `HTTP error! Status: ${response.status}`);
                 }
 
-                alert('Success: ' + result.message);
+                window.location.assign('/verify-account');
+                console.log('Success: ' + result.message);
             } catch (error) {
                 console.error('Error sending action: ', error.message);
-                alert(`Error: ${error.message}`);
             } finally {
                 document.getElementById('reg_button').disabled = false;
             }
+            
+            // const today = new Date();
+            // today.setFullYear(today.getFullYear() - 18);
+            // document.getElementById('reg_age').max =
+            // today.toISOString().split('T')[0];
         }
 
-        document.getElementById('login_button').addEventListener('click', (e) => {
+        
+
+        document.getElementById('loginForm').addEventListener('submit', (e) => {
             e.preventDefault();
             document.getElementById('login_button').disabled = true;
             login_backend();
         });
 
-        document.getElementById('reg_button').addEventListener('click', (e) => {
+        document.getElementById('registerForm').addEventListener('submit', (e) => {
             e.preventDefault();
             document.getElementById('reg_button').disabled = true;
             reg_backend();

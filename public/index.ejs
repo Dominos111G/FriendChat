@@ -6,8 +6,22 @@
   <title>FriendChat - Connect with New People</title>  
   <link rel="stylesheet" href="/css/all.css">
   <link rel="stylesheet" href="css/style.css">
+  
+  <!-- ADSENSE -->
+  <meta name="google-adsense-account" content="ca-pub-4659014092307821">
 </head>
 <body>
-
+  <%- include('elements/header.ejs') %>
+  <div id="panel">
+    <div class="hello"><h2>Welcome <%= user.username ? user.username : 'Guest' %></h2></div>
+    <p>Here you can meet new people.</p>
+    <p>Simply click the button to start a conversation with a random user. You can also set preferences to prioritize during the search. If the conversation isn't interesting, you can skip to the next one. Good luck!</p>
+    <div>
+      <button id="chat" onclick="window.location.href='/room/chat'">Text chat</button>
+      <p>or</p>
+      <button id="video" <%= user.username ? "" : "class='disabled'" %> onclick="window.location.href='/room/video'">Video chat</button>
+    </div>
+  </div>
+  <%- include('elements/footer.ejs') %>
 </body>
 </html>
