@@ -40,14 +40,18 @@ nie blokuje ponownego połączenia. Poprzedni czat zostaje zakończony, a partne
 otrzymuje informację o opuszczeniu rozmowy. Po stronie przeglądarki identyfikator
 aplikacyjny jest dostępny jako `socket.connectionId` po zdarzeniu `connectionId`.
 
-Klient Socket.IO łączy się z tym samym adresem, z którego otwarto stronę.
-Domyślna konfiguracja Socket.IO zaczyna od transportu polling i próbuje
-zaktualizować połączenie do WebSocket, jeśli jest dostępny.
-Lokalnie można użyć `http://localhost:3000`; na serwerze Ubuntu strona i backend
-powinny być dostępne pod tą samą domeną. Jeśli serwer działa za reverse proxy
-(np. Nginx), proxy musi przekazywać żądania `/socket.io/` oraz obsługiwać
-WebSocket Upgrade. Połączenie z osobną domeną frontendu wymaga osobnej
-konfiguracji adresu Socket.IO i CORS.
+Klient Socket.IO domyślnie łączy się z tym samym adresem, z którego otwarto
+stronę, zaczynając od pollingu i próbując przejść na WebSocket. Na Windowsie z
+XAMPP otwieraj stronę przez `http://localhost` i uruchom backend Node na porcie
+3000 (`node node/server.js`); klient połączy się bezpośrednio
+z `http://localhost:3000`, omijając proxy Apache dla transportu Socket.IO.
+Na serwerze Linux klient używa domeny strony, a Apache przekazuje `/socket.io/`
+do Node. Reguła w `.htaccess` wymaga włączonych modułów `mod_rewrite`,
+`mod_proxy`, `mod_proxy_http` i `mod_proxy_wstunnel`. Jeśli używasz Nginx,
+skonfiguruj proxy dla `/socket.io/` z HTTP/1.1 oraz nagłówkami `Upgrade` i
+`Connection`. Backend powinien nasłuchiwać na porcie 3000 albo port Node i
+odpowiednie reguły proxy muszą być zgodne. Połączenie z osobną domeną frontendu
+wymaga osobnej konfiguracji adresu Socket.IO i CORS.
 
 ## WERSJE PROGRAMÓW
 - NodeJS: **v26.8.2**

@@ -2,7 +2,12 @@ let socket = null;
 
 export function initSocket() {
   if (!socket) {
-    socket = io({ withCredentials: true });
+    const isLocalhost = ['localhost', '127.0.0.1'].includes(window.location.hostname);
+    const serverUrl = isLocalhost
+      ? `http://${window.location.hostname}:3000`
+      : undefined;
+
+    socket = io(serverUrl, { withCredentials: true });
 
     socket.on('connect', () => {
       console.log('Connected to server with socket ID:', socket.id);
