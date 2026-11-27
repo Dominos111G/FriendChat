@@ -2,32 +2,147 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Document</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  
+  <link rel="stylesheet" href="/css/all.css">
+  <link rel="stylesheet" href="/css/chat.css">
+  <title>FriendChat - Text Chat</title>
+
+  <!-- ADSENSE -->
+  <meta name="google-adsense-account" content="ca-pub-4659014092307821">
 </head>
 <body>
-  <div>
+  <%- include('../elements/header.ejs') %>
+  <div id="chatBox"></div><br>
+  <div id="buttons">
     <button id="StartButton">New Chat</button>
-    <input type="text" name="messageBox" id="MessageBox">
+    <textarea name="messageBox" id="MessageBox" placeholder="Type your message here..."></textarea>
     <button id="SendMessageButton">Send</button>
   </div>
 
+  <script>
+    let partnerName = null;
+    function chat(message, type){
+      const chatBox = document.getElementById("chatBox");
+      if(chatBox){
+        const frendlyName = type == "server" ? "" : type == "client" ? "You: " : type === "partner" ? partnerName ? `${partnerName}: ` : "Guest: " : type + ": ";
+        const divElement = document.createElement("div");
+        const usernameElement = document.createElement("span");
+        const messageElement = document.createElement("span");
+        usernameElement.textContent = frendlyName;
+        messageElement.textContent = message;
+        divElement.appendChild(usernameElement);
+        divElement.appendChild(messageElement);
+        chatBox.appendChild(divElement);
+        switch(type){
+          case "client":
+            usernameElement.style.color = "green";
+            break;
+          case "server":
+            messageElement.style.color = "grey";
+            break;
+          case "partner":
+            if (partnerName) {
+              usernameElement.style.color = "cyan";
+              break;
+            }
+            usernameElement.style.color = "blue";
+            break;
+          default:
+            usernameElement.style.color = "red";  
+        }
+    }
+  }
+  </script>
   <script src="/socket.io/socket.io.js"></script>
   <script type="module">
     import { initSocket } from "/js/socket.js";
-    import { initChatSocket } from "/js/sockets/chat-socket.js";
 
-    initSocket();
-    const chat = initChatSocket();
-
-    const sendBtn = document.getElementById("SendMessageButton");
+    const socket = initSocket();
+    const startBtn = document.getElementById("StartButton");
     const messageBox = document.getElementById("MessageBox");
+    const sendBtn = document.getElementById("SendMessageButton");
+    let isChatStarted = false;
+
+    socket.on("disconnect", () => {
+        partnerName = null;
+        isChatStarted = false;
+        if (startBtn) startBtn.textContent = "New Chat";
+        chat("Server connection lost. Reconnect and start a new chat.", "server");
+    });
+    socket.on("message", (data) => {
+        if (!data) {
+            console.log("Recived empty data!");
+            return;
+        }
+        playSound("message");
+        const sender = data.sender;
+        const message = data.message;
+        console.log(`${sender}: ${message}`);
+        chat(message, sender);
+    });
+    socket.on("connected", (data) => {
+        chat("Connected with user", "server");
+    });
+    socket.on("paired", (data) => {
+        playSound("join");
+        partnerName = data?.partner?.nick;
+        isChatStarted = true;
+        if (startBtn) startBtn.textContent = "Leave Chat";
+        chat(partnerName ? `Connected with ${partnerName}` : "Connected with user", "server");
+    });
+    socket.on("left", (data) => {
+        partnerName = null;
+        isChatStarted = false;
+        if (startBtn) startBtn.textContent = "New Chat";
+        chat("User left the chat", "server");
+    });
+    function start() {
+        socket.emit("start");
+        console.log("Started chat successfully");
+    }
+    function send(message) {
+        playSound("message");
+        socket.timeout(5000).emit("message", { message }, (error, response) => {
+          if (error) {
+            chat("Message not sent: the server did not respond. Please try again.", "server");
+            return;
+          }
+          if (!response?.success) {
+            chat(`Message not sent: ${response?.message || "Please try again."}`, "server");
+            return;
+          }
+          chat(response.message, "client");
+          if (messageBox && messageBox.value === message) {
+            messageBox.value = "";
+          }
+        });
+    }
+    function leave() {
+        socket.emit("leave");
+        console.log("Left the chat successfully");
+    }
+ 
     if (sendBtn && messageBox) {
       sendBtn.addEventListener("click", (e) => {
-        chat.send(messageBox.value);
-        messageBox.value = "";
+        send(messageBox.value);
+      });
+    }
+    if (startBtn) {
+      startBtn.addEventListener("click", (e) => {
+        if(isChatStarted){
+          leave();
+          startBtn.textContent = "New Chat";
+          isChatStarted = false;
+          return;
+        }
+        isChatStarted = true;
+        start();
+        // startBtn.disabled = false;
+        startBtn.textContent = "Leave Chat";
       });
     }
   </script>
+  <script src="/js/sounds.js"></script>
+  <%- include('../elements/footer.ejs') %>
 </body>
 </html>

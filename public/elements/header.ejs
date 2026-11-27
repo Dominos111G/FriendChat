@@ -1,9 +1,14 @@
-<link rel="stylesheet" href="css/header.css">
+<link rel="stylesheet" href="/css/all.css">
+<link rel="stylesheet" href="/css/header.css">
 <header>
-    <h2 id="site-name">FRIENDS.US</h2>
+    <h2 id="site-name">FriendChat</h2>
     <div id="header-buttons">
-        <button>HOME</button>
-        <button>SIGN IN</button>
-        <button>ACCOUNT</button>
+        <button onclick="window.location.href='/#'">HOME</button>
+        <% if(user.username) { %>
+            <button onclick="window.location.href='/account'">ACCOUNT</button>
+            <button onclick="window.location.href='/logout'">LOGOUT</button>
+        <% } else { %>
+            <button onclick="window.location.href='/login'">SIGN IN</button>
+        <% } %>
     </div>
 </header>

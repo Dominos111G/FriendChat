@@ -1,18 +1,16 @@
 import { verifyMessage } from '../verification/message.js';
 
-const connectedUsers = {};
-// SOCKET_ID: {
-//  socket: Socket,
-//  status: 'idle'/'searching'/'connected', 
-//  info: {userid: 123, nick: 'JohnDoe', age: 20, gender: '-'/'male'/'female'/'other', country: 'Poland'},
-//  pref: {ageMin: 18, gender: '-'/'male'/'female'/'other', country: '-'/'Poland'}
-// }
-const searchingUsers = {};
-const connectedPairs = {};
+import { connectedUsers, searchingUsers, connectedPairs } from '../holders/usersHolder.js'
 
-const validStatuses = ['idle', 'searching', 'connected'];
-const validGenders = ['-', 'male', 'female', 'other'];
+const validStatuses = ['Idle', 'Searching', 'Connected'];
+const validGenders = ['-', 'Male', 'Female', 'Other'];
 const maxAge = 120;
+const maxMessageLength = 1000;
+
+function getConnectionId(socket) {
+  const userId = socket.request.session?.user?.id;
+  return userId ? String(userId) : `socket_${socket.id}`;
+}
 
 function getText(value, field, maxLength) {
   if (typeof value !== 'string') {
@@ -39,7 +37,7 @@ function validateInfo(data, session) {
     return { valid: false, reason: nick.valid ? country.reason : nick.reason };
   }
   if (!Number.isInteger(age) || age < 18 || age > maxAge) {
-    return { valid: false, reason: 'age must be an integer between 18 and 120.' };
+    return { valid: false, reason: `age must be an integer between 18 and ${maxAge}.` };
   }
   if (!validGenders.includes(data.gender)) {
     return { valid: false, reason: 'gender is invalid.' };
@@ -51,7 +49,7 @@ function validateInfo(data, session) {
   return {
     valid: true,
     value: {
-      userid: session?.userId ?? null,
+      userid: session?.user?.id ?? null,
       nick: nick.value,
       age,
       gender: data.gender,
@@ -60,14 +58,41 @@ function validateInfo(data, session) {
   };
 }
 
-function validatePreferences(data) {
+function getSessionInfo(session) {
+  const sessionUser = session?.user;
+  if (!sessionUser) {
+    return null;
+  }
+
+  const result = validateInfo({
+    nick: sessionUser.username,
+    age: sessionUser.age,
+    gender: validGenders.includes(sessionUser.gender) ? sessionUser.gender : '-',
+    country: typeof sessionUser.country === 'string' && sessionUser.country.trim()
+      ? sessionUser.country
+      : '-'
+  }, session);
+
+  if (!result.valid) {
+    console.warn(`Could not load chat profile from session: ${result.reason}`);
+    return null;
+  }
+
+  return result.value;
+}
+
+function validatePref(data) {
   if (!data || typeof data !== 'object' || Array.isArray(data)) {
     return { valid: false, reason: 'Pref must be an object.' };
   }
 
   const ageMin = Number(data.ageMin);
-  if (!Number.isInteger(ageMin) || ageMin < 13 || ageMin > maxAge) {
-    return { valid: false, reason: 'ageMin must be an integer between 13 and 120.' };
+  const ageMax = Number(data.ageMax);
+  if (!Number.isInteger(ageMin) || !Number.isInteger(ageMax) || ageMin < 18 || ageMin > maxAge-5) {
+    return { valid: false, reason: `age must be an integer between 18 and ${maxAge-5}.` };
+  }
+  if (ageMax < 23 || ageMax > maxAge || (ageMax - ageMin) < 5) {
+      return { valid: false, reason: 'age must have at least a 5 years gap between min and max.' };
   }
   if (!validGenders.includes(data.gender)) {
     return { valid: false, reason: 'pref gender is invalid.' };
@@ -88,56 +113,147 @@ export function changeUserStatus(socketId, newStatus) {
     return;
   }
 
-  const currentStatus = connectedUsers[socketId]?.status;
+  const user = connectedUsers.get(socketId);
+  if (!user) {
+    console.error(`Cannot change status: user ${socketId} is not connected.`);
+    return;
+  }
+
+  const currentStatus = user.status;
   if (currentStatus === newStatus) { 
     console.log(`Status for socket ${socketId} is already ${newStatus}`);
     return;
   }
 
-  // Usuń z listy
-  if (currentStatus === 'searching') { delete searchingUsers[socketId]; } 
-  else if (currentStatus === 'connected') { delete connectedPairs[socketId]; }
-  
-  // Zmień status
-  if (connectedUsers[socketId]) { connectedUsers[socketId].status = newStatus; }
-  
-  // Dodaj do listy
-  if (newStatus === 'searching') { searchingUsers[socketId] = connectedUsers[socketId]; } 
-  else if (newStatus === 'connected') { connectedPairs[socketId] = connectedUsers[socketId]; }
+  searchingUsers.delete(socketId);
+
+  if (currentStatus === 'Connected' && newStatus !== 'Connected') {
+    const partnerId = connectedPairs.get(socketId);
+    connectedPairs.delete(socketId);
+    if (partnerId !== undefined) {
+      connectedPairs.delete(partnerId);
+      const partner = connectedUsers.get(partnerId);
+      if (partner) {
+        partner.status = 'Idle';
+      }
+    }
+  }
+
+  user.status = newStatus;
+  if (newStatus === 'Searching') {
+    searchingUsers.set(socketId, user);
+  }
 }
 
 function tryToPairUsers() {
-  for (const [socketIdA, userA] of Object.entries(searchingUsers)) {
-    const pref = userA.pref;
-    if (!pref) { console.log("Could not find user prefs!"); continue; }
-    for (const [socketIdB, userB] of Object.entries(searchingUsers)) {
+  for (const [socketIdA, userA] of searchingUsers) {
+    for (const [socketIdB, userB] of searchingUsers) {
       if (socketIdA === socketIdB) continue;
-      const info = userB.info;
-      if (!info) { console.log("Could not find user info!"); continue; }
+      if (userA.mode !== userB.mode) continue;
+      // ADD LATER: Check if userB matches userA's preferences
+
+      // Connect users
+      connectedPairs.set(socketIdA, socketIdB);
+      connectedPairs.set(socketIdB, socketIdA);
+      changeUserStatus(socketIdA, 'Connected');
+      changeUserStatus(socketIdB, 'Connected');
+      userA.socket.emit('paired', { partner: userB.info, initiator: true });
+      userB.socket.emit('paired', { partner: userA.info, initiator: false });
+      console.log(`Paired users: ${socketIdA} and ${socketIdB}`);
+      break; // Exit inner loop after pairing
     }
   }
 }
 
+function leaveChat(connectionId) {
+  const partnerId = connectedPairs.get(connectionId);
+  changeUserStatus(connectionId, 'Idle');
+
+  if (partnerId !== undefined) {
+    const partner = connectedUsers.get(partnerId);
+    if (partner) {
+      partner.socket.emit('left');
+    }
+  }
+}
+
+function validVideoDescription(data, type) {
+  return Boolean(
+    data &&
+    typeof data === 'object' &&
+    !Array.isArray(data) &&
+    data.type === type &&
+    typeof data.sdp === 'string' &&
+    data.sdp.length > 0 &&
+    data.sdp.length <= 100000
+  );
+}
+
+function validVideoCandidate(data) {
+  return Boolean(
+    data &&
+    typeof data === 'object' &&
+    !Array.isArray(data) &&
+    typeof data.candidate === 'string' &&
+    data.candidate.length <= 4096 &&
+    (data.sdpMid === null || typeof data.sdpMid === 'string' && data.sdpMid.length <= 256) &&
+    (data.sdpMLineIndex === null || Number.isInteger(data.sdpMLineIndex) && data.sdpMLineIndex >= 0) &&
+    (data.usernameFragment === undefined || data.usernameFragment === null ||
+      typeof data.usernameFragment === 'string' && data.usernameFragment.length <= 256)
+  );
+}
+
 export function registerServerSocket(io){
   console.log('Registering server socket...');
+
+  io.use((socket, next) => {
+    const connectionId = getConnectionId(socket);
+    socket.data.connectionId = connectionId;
+    next();
+  });
+
   io.on('connection', (socket) => {
-    console.log(`Socket connected: ${socket.id}`);
-    connectedUsers[socket.id] = { socket, status: 'idle', info: null, pref: null };
+    const connectionId = socket.data.connectionId;
+    const previousUser = connectedUsers.get(connectionId);
+    if (previousUser) {
+      leaveChat(connectionId);
+      connectedUsers.delete(connectionId);
+      previousUser.socket.disconnect(true);
+      console.log(`Replaced previous socket for connection: ${connectionId}`);
+    }
+
+    console.log(`Socket connected: ${connectionId} (transport socket: ${socket.id})`);
+    connectedUsers.set(connectionId, {
+      socket,
+      status: 'Idle',
+      mode: 'text',
+      info: getSessionInfo(socket.request.session),
+      pref: null
+    });
+    socket.emit('connectionId', connectionId);
+
     socket.on('setUserData', (data, callback) => {
       const respond = typeof callback === 'function' ? callback : () => {};
-      const user = connectedUsers[socket.id];
-      const infoResult = validateInfo(data?.info, socket.request.session);
-      if (!infoResult.valid) {
-        return respond({ success: false, message: infoResult.reason });
+      const user = connectedUsers.get(connectionId);
+      if (!user) {
+        return respond({ success: false, message: 'User is no longer connected.' });
       }
-
-      user.info = infoResult.value;
+      const isAuthenticated = Boolean(socket.request.session?.user?.id);
+      if (isAuthenticated) {
+        user.info = getSessionInfo(socket.request.session);
+      } else if (data?.info !== undefined) {
+        const infoResult = validateInfo(data.info, socket.request.session);
+        if (!infoResult.valid) {
+          return respond({ success: false, message: infoResult.reason });
+        }
+        user.info = infoResult.value;
+      }
       user.pref = null;
 
-      if (socket.request.session?.userId) {
-        const prefResult = validatePreferences(data?.pref);
+      if (isAuthenticated && data?.pref !== undefined && data.pref !== null) {
+        const prefResult = validatePref(data?.pref);
         if (!prefResult.valid) {
-          user.info = null;
+          console.log(`Invalid preferences for user ${connectionId}: ${prefResult.reason}`);
           return respond({ success: false, message: prefResult.reason });
         }
         user.pref = prefResult.value;
@@ -145,11 +261,92 @@ export function registerServerSocket(io){
 
       return respond({ success: true, data: { info: user.info, pref: user.pref } });
     });
+
     socket.on('disconnect', () => {
-      console.log(`Socket disconnected: ${socket.id}`);
-      delete searchingUsers[socket.id];
-      delete connectedPairs[socket.id];
-      delete connectedUsers[socket.id];
+      console.log(`Socket disconnected: ${connectionId}`);
+      const user = connectedUsers.get(connectionId);
+      if (user?.socket !== socket) return;
+      leaveChat(connectionId);
+      connectedUsers.delete(connectionId);
+    });
+
+    socket.on('start', () => {
+      const user = connectedUsers.get(connectionId);
+      if (user) user.mode = 'text';
+      const newStatus = connectedUsers.get(connectionId)?.status === 'Searching' ? 'Idle' : 'Searching';
+      changeUserStatus(connectionId, newStatus);
+      console.log(`Użytkownik ${connectionId} zmienił status na: ${newStatus}`);
+    });
+    socket.on('startVideo', () => {
+      const user = connectedUsers.get(connectionId);
+      if (user) user.mode = 'video';
+      const newStatus = connectedUsers.get(connectionId)?.status === 'Searching' ? 'Idle' : 'Searching';
+      changeUserStatus(connectionId, newStatus);
+      console.log(`Użytkownik ${connectionId} rozpoczął wyszukiwanie rozmowy wideo`);
+    });
+    socket.on('message', (data, callback) => {
+      const respond = typeof callback === 'function' ? callback : () => {};
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        return respond({ success: false, message: 'Invalid message data.' });
+      }
+
+      if (typeof data.message !== 'string' || data.message.length > maxMessageLength) {
+        return respond({ success: false, message: `Message must be a string up to ${maxMessageLength} characters.` });
+      }
+
+      const verification = verifyMessage(data.message);
+      if (!verification.valid) {
+        return respond({ success: false, message: verification.reason });
+      }
+
+      const partnerId = connectedPairs.get(connectionId);
+      const partner = partnerId !== undefined ? connectedUsers.get(partnerId) : null;
+      const user = connectedUsers.get(connectionId);
+      if (!partner || !user || user.status !== 'Connected' || partner.status !== 'Connected') {
+        return respond({ success: false, message: 'You are not connected to a chat partner.' });
+      }
+
+      const message = verification.message;
+      partner.socket.emit('message', {
+        sender: user.info?.nick || 'partner',
+        message
+      });
+
+      // zaimplementować czyszczenie
+      console.log(`Wiadomość wysłana przez ${connectionId}`);
+      return respond({ success: true, message });
+    });
+    socket.on('leave', () => {
+      leaveChat(connectionId);
+      console.log(`Użytkownik ${connectionId} opuścił pokój`);
+    });
+
+    const relayVideoSignal = (eventName, data, isValid, callback) => {
+      const respond = typeof callback === 'function' ? callback : () => {};
+      if (!isValid(data)) {
+        return respond({ success: false, message: 'Invalid video signal.' });
+      }
+
+      const user = connectedUsers.get(connectionId);
+      const partnerId = connectedPairs.get(connectionId);
+      const partner = partnerId !== undefined ? connectedUsers.get(partnerId) : null;
+      if (!user || user.mode !== 'video' || user.status !== 'Connected' ||
+          !partner || partner.mode !== 'video' || partner.status !== 'Connected') {
+        return respond({ success: false, message: 'You are not connected to a video chat partner.' });
+      }
+
+      partner.socket.emit(eventName, data);
+      return respond({ success: true });
+    };
+
+    socket.on('video:offer', (data, callback) => {
+      relayVideoSignal('video:offer', data, value => validVideoDescription(value, 'offer'), callback);
+    });
+    socket.on('video:answer', (data, callback) => {
+      relayVideoSignal('video:answer', data, value => validVideoDescription(value, 'answer'), callback);
+    });
+    socket.on('video:candidate', (data, callback) => {
+      relayVideoSignal('video:candidate', data, validVideoCandidate, callback);
     });
   });
 
@@ -158,7 +355,7 @@ export function registerServerSocket(io){
     const delay = ms => new Promise(res => setTimeout(res, ms));
     let lastKnownLength = 0;
     while (true) {
-      const currentLength = Object.keys(connectedUsers).length;
+      const currentLength = connectedUsers.size;
       if (lastKnownLength !== currentLength) { console.log('Connected users:', currentLength); lastKnownLength = currentLength; }
       if (currentLength > 0) {
         tryToPairUsers();

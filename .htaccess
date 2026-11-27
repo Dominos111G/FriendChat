@@ -3,10 +3,11 @@ Options -MultiViews
 RewriteEngine On
 RewriteBase /
 
-# Proxy API and socket.io to Node.js backend (on localhost:3000)
-# Requires mod_proxy and mod_proxy_http enabled. The [P] flag proxies the request.
-# Proxy /api/* and /socket.io/* to Node so AJAX and socket.io work without explicit ports in client.
+# Proxy API and socket.io to Node.js backend (on localhost:3000).
+# Requires mod_rewrite, mod_proxy, mod_proxy_http and mod_proxy_wstunnel.
 RewriteRule ^api/(.*)$ http://127.0.0.1:3000/api/$1 [P,L]
+RewriteCond %{HTTP:Upgrade} =websocket [NC]
+RewriteRule ^socket.io/(.*)$ ws://127.0.0.1:3000/socket.io/$1 [P,L]
 RewriteRule ^socket.io/(.*)$ http://127.0.0.1:3000/socket.io/$1 [P,L]
 
 # Serve files from /public internally so URLs don't show /public/
